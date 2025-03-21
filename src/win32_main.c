@@ -4,16 +4,45 @@
 
 #include <windows.h>
 #include <gl/gl.h>
+#include "game_main.h"
 
 LRESULT CALLBACK WindProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+void InitWindow();
+bool IsWindowOpen();
 HGLRC InitOpenGl(HDC windowHdc);
+void ProcessInput();
+void MakeDrawCall();
+void ClearScreen(float r, float g, float b, float a);
+
+HINSTANCE windowHInstance;
+int windowNCmdShow;
+MSG msg = {};
+bool shouldRun = true;
+HDC windowHdc;
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         PWSTR pCmdLine, int nCmdShow) {
+    windowHInstance = hInstance;
+    windowNCmdShow = nCmdShow;
+
+    Render render = {};
+    render.MakeDrawCall = MakeDrawCall;
+    render.ClearScreen = ClearScreen;
+
+    Platform platform = {};
+    platform.InitWindow = InitWindow;
+    platform.IsWindowOpen = IsWindowOpen;
+    platform.ProcessInput = ProcessInput;
+    platform.render = &render;
+
+    return GameMain(&platform);
+}
+
+void InitWindow() {
     const wchar_t className[] = L"WindowClassName";
     WNDCLASS wc = {};
     wc.lpfnWndProc = WindProc;
-    wc.hInstance = hInstance;
+    wc.hInstance = windowHInstance;
     wc.lpszClassName = className;
     RegisterClass(&wc);
 
@@ -25,29 +54,37 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
             CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
             NULL,
             NULL,
-            hInstance,
+            windowHInstance,
             NULL);
 
-    if (hwnd == NULL) {
-        return 0;
-    }
-
-    HDC windowHdc = GetDC(hwnd);
+    windowHdc = GetDC(hwnd);
     HGLRC hglrc = InitOpenGl(windowHdc);
 
-    ShowWindow(hwnd, nCmdShow);
+    ShowWindow(hwnd, windowNCmdShow);
+}
 
-    MSG msg = {};
-    while(GetMessage(&msg, NULL, 0, 0) > 0) {
+bool IsWindowOpen() {
+    return shouldRun;
+}
+
+void ProcessInput() {
+    while(PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+        if (msg.message == WM_QUIT) {
+            shouldRun = false;
+            break;
+        }
         TranslateMessage(&msg);
         DispatchMessage(&msg);
-
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-        SwapBuffers(windowHdc);
     }
+}
 
-    return 0;
+void MakeDrawCall() {
+    SwapBuffers(windowHdc);
+}
+
+void ClearScreen(float r, float g, float b, float a) {
+    glClearColor(r, g, b, a);
+    glClear(GL_COLOR_BUFFER_BIT);
 }
 
 LRESULT CALLBACK WindProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {

@@ -2,7 +2,7 @@
 
 mkdir bin > NUL 2>&1
 
-cl src\win32_main.c ^
+cl src\*.c ^
     /Fe: bin\ ^
     /Fo: bin\ ^
     /Fd: bin\ ^
