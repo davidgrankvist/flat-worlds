@@ -14,6 +14,7 @@
 
 void InitWindow();
 bool IsWindowOpen();
+void CloseCurrentWindow();
 
 void InitConsole();
 
@@ -40,6 +41,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     Platform platform = {};
     platform.InitWindow = InitWindow;
     platform.IsWindowOpen = IsWindowOpen;
+    platform.CloseCurrentWindow = CloseCurrentWindow;
 
     platform.InitConsole = InitConsole;
 
@@ -92,6 +94,10 @@ void InitWindow() {
 
 bool IsWindowOpen() {
     return shouldRun;
+}
+
+void CloseCurrentWindow() {
+    shouldRun = false;
 }
 
 LRESULT CALLBACK WindProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {

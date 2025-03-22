@@ -34,6 +34,7 @@ typedef enum {
 typedef struct {
     void (*InitWindow)();
     bool (*IsWindowOpen)();
+    void (*CloseCurrentWindow)();
 
     void (*InitConsole)();
 
