@@ -34,8 +34,10 @@ typedef enum {
 typedef struct {
     void (*InitWindow)();
     bool (*IsWindowOpen)();
-    void (*ProcessInput)();
 
+    void (*InitConsole)();
+
+    void (*ProcessInput)();
     bool (*IsKeyDown)(InputKey key);
     bool (*IsKeyPressed)(InputKey key);
     bool (*IsKeyReleased)(InputKey key);

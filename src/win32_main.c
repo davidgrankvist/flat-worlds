@@ -10,38 +10,27 @@
 #include <gl/gl.h>
 #include "game_main.h"
 
-LRESULT CALLBACK WindProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-HGLRC InitOpenGl(HDC windowHdc);
-InputKey MapKeyCode(WPARAM vk);
+// -- Platform layer API --
 
 void InitWindow();
 bool IsWindowOpen();
+
+void InitConsole();
+
 void ProcessInput();
-void MakeDrawCall();
-void ClearScreen(float r, float g, float b, float a);
 bool IsKeyDown(InputKey key);
 bool IsKeyPressed(InputKey key);
 bool IsKeyReleased(InputKey key);
 
+void MakeDrawCall();
+void ClearScreen(float r, float g, float b, float a);
+
+// -- Internal constants (to make platform API simple for consumer) --
 HINSTANCE windowHInstance;
 int windowNCmdShow;
 MSG msg = {};
 bool shouldRun = true;
 HDC windowHdc;
-
-/*
- * The input buffer is packed into a u64 with one bit per key.
- * bit set in inputKeys[0] = currently down.
- * bit set in inputKeys[1] = previously down.
- *
- * This works as long as the InputKey enum has at most 64 values.
- */
-uint64_t inputKeys[2];
-#define KEY_TO_BIT(k) (1 << k)
-#define IS_KEY_SET(k, input) (input & KEY_TO_BIT(k))
-void UpdateInputBuffers();
-void SetKeyDown(InputKey key);
-void SetKeyUp(InputKey key);
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         PWSTR pCmdLine, int nCmdShow) {
@@ -51,6 +40,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     Platform platform = {};
     platform.InitWindow = InitWindow;
     platform.IsWindowOpen = IsWindowOpen;
+
+    platform.InitConsole = InitConsole;
 
     platform.ProcessInput = ProcessInput;
     platform.IsKeyDown = IsKeyDown;
@@ -64,6 +55,15 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
     return GameMain(&platform);
 }
+
+// -- Window --
+
+LRESULT CALLBACK WindProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+HGLRC InitOpenGl(HDC windowHdc);
+
+InputKey MapKeyCode(WPARAM vk);
+void SetKeyDown(InputKey key);
+void SetKeyUp(InputKey key);
 
 void InitWindow() {
     const wchar_t className[] = L"WindowClassName";
@@ -94,28 +94,6 @@ bool IsWindowOpen() {
     return shouldRun;
 }
 
-void ProcessInput() {
-    UpdateInputBuffers();
-
-    while(PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
-        if (msg.message == WM_QUIT) {
-            shouldRun = false;
-            break;
-        }
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-    }
-}
-
-void MakeDrawCall() {
-    SwapBuffers(windowHdc);
-}
-
-void ClearScreen(float r, float g, float b, float a) {
-    glClearColor(r, g, b, a);
-    glClear(GL_COLOR_BUFFER_BIT);
-}
-
 LRESULT CALLBACK WindProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     switch(uMsg) {
         case WM_DESTROY:
@@ -129,6 +107,65 @@ LRESULT CALLBACK WindProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             return 0;
     }
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
+}
+
+HGLRC InitOpenGl(HDC windowHdc) {
+    PIXELFORMATDESCRIPTOR pfd = {};
+    pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
+    pfd.nVersion = 1;
+    pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+    pfd.cColorBits = 24;
+    pfd.cAlphaBits = 8;
+
+    int pixelFormat = ChoosePixelFormat(windowHdc, &pfd);
+    SetPixelFormat(windowHdc, pixelFormat, &pfd);
+
+    PIXELFORMATDESCRIPTOR actualPfd = {};
+    DescribePixelFormat(windowHdc, pixelFormat, sizeof(PIXELFORMATDESCRIPTOR), &actualPfd);
+
+    HGLRC hglrc = wglCreateContext(windowHdc);
+    wglMakeCurrent(windowHdc, hglrc);
+
+    return hglrc;
+}
+
+// -- Console --
+
+void InitConsole() {
+    if (!AttachConsole(ATTACH_PARENT_PROCESS)) {
+        AllocConsole();
+    }
+    freopen("CONOUT$", "w", stdout);
+    freopen("CONOUT$", "w", stdout);
+    freopen("CONOUT$", "r", stdin);
+}
+
+// -- Input --
+
+/*
+ * The input buffer is packed into a u64 with one bit per key.
+ * bit set in inputKeys[0] = currently down.
+ * bit set in inputKeys[1] = previously down.
+ *
+ * This works as long as the InputKey enum has at most 64 values.
+ */
+uint64_t inputKeys[2];
+#define KEY_TO_BIT(k) (1 << k)
+#define IS_KEY_SET(k, input) (input & KEY_TO_BIT(k))
+void UpdateInputBuffers();
+
+
+void ProcessInput() {
+    UpdateInputBuffers();
+
+    while(PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+        if (msg.message == WM_QUIT) {
+            shouldRun = false;
+            break;
+        }
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
 }
 
 /*
@@ -200,22 +237,13 @@ bool IsKeyReleased(InputKey key) {
         && IS_KEY_SET(key, inputKeys[1]);
 }
 
-HGLRC InitOpenGl(HDC windowHdc) {
-    PIXELFORMATDESCRIPTOR pfd = {};
-    pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
-    pfd.nVersion = 1;
-    pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
-    pfd.cColorBits = 24;
-    pfd.cAlphaBits = 8;
+// -- Render --
 
-    int pixelFormat = ChoosePixelFormat(windowHdc, &pfd);
-    SetPixelFormat(windowHdc, pixelFormat, &pfd);
+void MakeDrawCall() {
+    SwapBuffers(windowHdc);
+}
 
-    PIXELFORMATDESCRIPTOR actualPfd = {};
-    DescribePixelFormat(windowHdc, pixelFormat, sizeof(PIXELFORMATDESCRIPTOR), &actualPfd);
-
-    HGLRC hglrc = wglCreateContext(windowHdc);
-    wglMakeCurrent(windowHdc, hglrc);
-
-    return hglrc;
+void ClearScreen(float r, float g, float b, float a) {
+    glClearColor(r, g, b, a);
+    glClear(GL_COLOR_BUFFER_BIT);
 }

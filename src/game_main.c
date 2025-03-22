@@ -4,6 +4,9 @@ int GameMain(Platform* platform) {
     platform->InitWindow();
     Render* render = platform->render;
 
+    platform->InitConsole();
+    printf("Hello from GameMain!\n");
+
     while (platform->IsWindowOpen()) {
         platform->ProcessInput();
 
