@@ -25,6 +25,8 @@ bool IsKeyReleased(InputKey key);
 bool IsMouseDown(InputMouseButton key);
 bool IsMousePressed(InputMouseButton key);
 bool IsMouseReleased(InputMouseButton key);
+int GetMouseInputX();
+int GetMouseInputY();
 
 void MakeDrawCall();
 void ClearScreen(float r, float g, float b, float a);
@@ -62,6 +64,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     platform.IsMouseDown = IsMouseDown;
     platform.IsMousePressed = IsMousePressed;
     platform.IsMouseReleased = IsMouseReleased;
+    platform.GetMouseInputX = GetMouseInputX;
+    platform.GetMouseInputY = GetMouseInputY;
 
     Render render = {};
     render.MakeDrawCall = MakeDrawCall;
@@ -75,10 +79,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 LRESULT CALLBACK WindProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 HGLRC InitOpenGl(HDC windowHdc);
-
-InputKey MapKeyCode(WPARAM wParam, LPARAM lParam);
-void SetKeyDown(InputKey key);
-void SetKeyUp(InputKey key);
 
 void InitWindow() {
     const wchar_t className[] = L"WindowClassName";
@@ -113,8 +113,13 @@ void CloseCurrentWindow() {
     shouldRun = false;
 }
 
+InputKey MapKeyCode(WPARAM wParam, LPARAM lParam);
+void SetKeyDown(InputKey key);
+void SetKeyUp(InputKey key);
 void SetMouseDown(InputMouseButton btn);
 void SetMouseUp(InputMouseButton btn);
+void MapAndSetMousePosition(LPARAM lParam);
+void SetMousePosition(int x, int y);
 
 LRESULT CALLBACK WindProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     switch(uMsg) {
@@ -149,6 +154,10 @@ LRESULT CALLBACK WindProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         case WM_MBUTTONUP:
             SetMouseUp(MouseMiddle);
             return 0;
+        case WM_MOUSEMOVE: {
+            MapAndSetMousePosition(lParam);
+            return 0;
+        }
     }
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
@@ -315,6 +324,27 @@ bool IsMousePressed(InputMouseButton btn) {
 bool IsMouseReleased(InputMouseButton btn) {
     return !IS_KEY_SET(btn, inputState.inputMouseButtons[0])
         && IS_KEY_SET(btn, inputState.inputMouseButtons[1]);
+}
+
+// see https://learn.microsoft.com/en-us/windows/win32/inputdev/wm-mousemove
+void MapAndSetMousePosition(LPARAM lParam) {
+    int x = lParam & 0x0000FFFF;
+    int y = lParam >> 16;
+
+    SetMousePosition(x, y);
+}
+
+void SetMousePosition(int x, int y) {
+    inputState.mouseX = x;
+    inputState.mouseY = y;
+}
+
+int GetMouseInputX() {
+    return inputState.mouseX;
+}
+
+int GetMouseInputY() {
+    return inputState.mouseY;
 }
 
 // -- Render --

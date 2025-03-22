@@ -53,6 +53,8 @@ typedef struct {
     bool (*IsMouseDown)(InputMouseButton btn);
     bool (*IsMousePressed)(InputMouseButton btn);
     bool (*IsMouseReleased)(InputMouseButton btn);
+    int (*GetMouseInputX)();
+    int (*GetMouseInputY)();
 
     Render* render;
 } Platform;
