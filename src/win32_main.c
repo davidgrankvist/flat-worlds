@@ -1,37 +1,33 @@
 /*
  * This is the win32 entrypoint. It sets up win32 specific functions and passes them as function pointers to GameMain where the game code runs.
+ *
+ * This file handles:
+ * - window creation
+ * - processing input and mapping key codes
+ * - rendering backend initialization and swapping buffers
+ *
+ * The actual input buffering and rendering backend are defined in shared headers that are not specific to win32.
  */
 
 #ifndef UNICODE
 #define UNICODE
 #endif
 
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include <gl/gl.h>
+#include "input.h"
+#include "opengl_render.h"
 #include "game_main.h"
 
-// -- Platform layer API --
-
+// subset of platform API calls
 void InitWindow();
 bool IsWindowOpen();
 void CloseCurrentWindow();
-
 void InitConsole();
-
 void ProcessInput();
-bool IsKeyDown(InputKey key);
-bool IsKeyPressed(InputKey key);
-bool IsKeyReleased(InputKey key);
-bool IsMouseDown(InputMouseButton key);
-bool IsMousePressed(InputMouseButton key);
-bool IsMouseReleased(InputMouseButton key);
-int GetMouseInputX();
-int GetMouseInputY();
+void MakeDrawCallGl();
 
-void MakeDrawCall();
-void ClearScreen(float r, float g, float b, float a);
-
-// -- Internal constants (to make platform API simple for consumer) --
+// internal constants to have platform API functions without arguments
 HINSTANCE windowHInstance;
 int windowNCmdShow;
 MSG msg = {};
@@ -68,8 +64,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     platform.GetMouseInputY = GetMouseInputY;
 
     Render render = {};
-    render.MakeDrawCall = MakeDrawCall;
-    render.ClearScreen = ClearScreen;
+    render.MakeDrawCall = MakeDrawCallGl;
+    render.ClearScreen = ClearScreenGl;
     platform.render = &render;
 
     return GameMain(&platform);
@@ -114,12 +110,7 @@ void CloseCurrentWindow() {
 }
 
 InputKey MapKeyCode(WPARAM wParam, LPARAM lParam);
-void SetKeyDown(InputKey key);
-void SetKeyUp(InputKey key);
-void SetMouseDown(InputMouseButton btn);
-void SetMouseUp(InputMouseButton btn);
 void MapAndSetMousePosition(LPARAM lParam);
-void SetMousePosition(int x, int y);
 
 LRESULT CALLBACK WindProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     switch(uMsg) {
@@ -195,25 +186,6 @@ void InitConsole() {
 
 // -- Input --
 
-// call at the beginning of ProcessInput to make sure things like previous states are updated
-void UpdateInputBuffers();
-
-// helpers to toggle 1-bit key/button states
-#define KEY_TO_BIT(k) (1 << k)
-#define IS_KEY_SET(k, input) (input & KEY_TO_BIT(k))
-
-// current / previous key states are set with single bits (1 means down)
-typedef struct {
-    // keys
-    uint64_t inputKeys[2];
-
-    // mouse
-    int mouseX;
-    int mouseY;
-    uint8_t inputMouseButtons[2];
-} InputState;
-InputState inputState = {};
-
 void ProcessInput() {
     UpdateInputBuffers();
 
@@ -277,55 +249,6 @@ InputKey MapKeyCode(WPARAM wParam, LPARAM lParam) {
     }
 }
 
-void UpdateInputBuffers() {
-    inputState.inputKeys[1] = inputState.inputKeys[0];
-    inputState.inputMouseButtons[1] = inputState.inputMouseButtons[0];
-}
-
-void SetKeyDown(InputKey key) {
-    inputState.inputKeys[0] |= KEY_TO_BIT(key);
-}
-
-void SetKeyUp(InputKey key) {
-    inputState.inputKeys[0] &= ~KEY_TO_BIT(key);
-}
-
-bool IsKeyDown(InputKey key) {
-    return IS_KEY_SET(key, inputState.inputKeys[0]);
-}
-
-bool IsKeyPressed(InputKey key) {
-    return IS_KEY_SET(key, inputState.inputKeys[0])
-        && !IS_KEY_SET(key, inputState.inputKeys[1]);
-}
-
-bool IsKeyReleased(InputKey key) {
-    return !IS_KEY_SET(key, inputState.inputKeys[0])
-        && IS_KEY_SET(key, inputState.inputKeys[1]);
-}
-
-void SetMouseDown(InputMouseButton btn) {
-    inputState.inputMouseButtons[0] |= KEY_TO_BIT(btn);
-}
-
-void SetMouseUp(InputMouseButton btn) {
-    inputState.inputMouseButtons[0] &= ~KEY_TO_BIT(btn);
-}
-
-bool IsMouseDown(InputMouseButton btn) {
-    return IS_KEY_SET(btn, inputState.inputMouseButtons[0]);
-}
-
-bool IsMousePressed(InputMouseButton btn) {
-    return IS_KEY_SET(btn, inputState.inputMouseButtons[0])
-        && !IS_KEY_SET(btn, inputState.inputMouseButtons[1]);
-}
-
-bool IsMouseReleased(InputMouseButton btn) {
-    return !IS_KEY_SET(btn, inputState.inputMouseButtons[0])
-        && IS_KEY_SET(btn, inputState.inputMouseButtons[1]);
-}
-
 // see https://learn.microsoft.com/en-us/windows/win32/inputdev/wm-mousemove
 void MapAndSetMousePosition(LPARAM lParam) {
     int x = lParam & 0x0000FFFF;
@@ -334,26 +257,8 @@ void MapAndSetMousePosition(LPARAM lParam) {
     SetMousePosition(x, y);
 }
 
-void SetMousePosition(int x, int y) {
-    inputState.mouseX = x;
-    inputState.mouseY = y;
-}
-
-int GetMouseInputX() {
-    return inputState.mouseX;
-}
-
-int GetMouseInputY() {
-    return inputState.mouseY;
-}
-
 // -- Render --
 
-void MakeDrawCall() {
+void MakeDrawCallGl() {
     SwapBuffers(windowHdc);
-}
-
-void ClearScreen(float r, float g, float b, float a) {
-    glClearColor(r, g, b, a);
-    glClear(GL_COLOR_BUFFER_BIT);
 }
