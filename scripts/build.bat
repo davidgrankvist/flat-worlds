@@ -3,7 +3,7 @@
 mkdir bin > NUL 2>&1
 
 cl src\*.c ^
-    /Fe: bin\ ^
+    /Fe: bin\game.exe ^
     /Fo: bin\ ^
     /Fd: bin\ ^
     /Zi ^

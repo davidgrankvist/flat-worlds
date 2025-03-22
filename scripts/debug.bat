@@ -1,3 +1,3 @@
 @echo off
 
-devenv bin\win32_main.exe
+devenv bin\game.exe

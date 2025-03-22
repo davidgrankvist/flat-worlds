@@ -1,3 +1,3 @@
 @echo off
 
-.\bin\win32_main.exe
+.\bin\game.exe
