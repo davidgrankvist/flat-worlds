@@ -63,7 +63,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 LRESULT CALLBACK WindProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 HGLRC InitOpenGl(HDC windowHdc);
 
-InputKey MapKeyCode(WPARAM vk);
+InputKey MapKeyCode(WPARAM wParam, LPARAM lParam);
 void SetKeyDown(InputKey key);
 void SetKeyUp(InputKey key);
 
@@ -106,10 +106,12 @@ LRESULT CALLBACK WindProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             PostQuitMessage(0);
             return 0;
         case WM_KEYDOWN:
-            SetKeyDown(MapKeyCode(wParam));
+        case WM_SYSKEYDOWN:
+            SetKeyDown(MapKeyCode(wParam, lParam));
             return 0;
         case WM_KEYUP:
-            SetKeyUp(MapKeyCode(wParam));
+        case WM_SYSKEYUP:
+            SetKeyUp(MapKeyCode(wParam, lParam));
             return 0;
     }
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
@@ -185,7 +187,10 @@ static InputKey MapKeyCodeInRange(WPARAM vk, WPARAM vkStart, InputKey keyStart) 
 }
 
 // see https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
-InputKey MapKeyCode(WPARAM vk) {
+InputKey MapKeyCode(WPARAM wParam, LPARAM lParam) {
+    int vk = wParam;
+    int scanCode = (lParam >> 16) & 0xFF;
+
     // letters
     if (vk >= 0x41 && vk <= 0x5A) {
         return MapKeyCodeInRange(vk, 0x41, KeyA);
@@ -194,9 +199,13 @@ InputKey MapKeyCode(WPARAM vk) {
     if (vk >= 0x30 && vk <= 0x39) {
         return MapKeyCodeInRange(vk, 0x30, Key0);
     }
-    // modifiers
-    if (vk >= 0xA0 && vk <= 0xA5) {
-        return MapKeyCodeInRange(vk, 0xA0, KeyLeftShift);
+    // modifiers (generic shift/ctrl/alt)
+    if (vk >= 0x10 && vk <= 0x12) {
+        // check for left/right variant
+        int actualVk = MapVirtualKey(scanCode, MAPVK_VSC_TO_VK_EX);
+        if (actualVk >= 0xA0 && actualVk <= 0xA5) {
+            return MapKeyCodeInRange(actualVk, 0xA0, KeyLeftShift);
+        }
     }
     // fn
     if (vk >= 0x70 && vk <= 0x7B) {
