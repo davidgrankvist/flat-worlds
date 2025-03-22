@@ -7,6 +7,7 @@ cl src\*.c ^
     /Fo: bin\ ^
     /Fd: bin\ ^
     /Zi ^
+    /I"vendor\include" ^
     /link ^
         user32.lib ^
         gdi32.lib ^

@@ -19,6 +19,8 @@
 #include "opengl_render.h"
 #include "game_main.h"
 
+#include <gl/wglext.h>
+
 // subset of platform API calls
 void InitWindow();
 bool IsWindowOpen();
@@ -26,6 +28,7 @@ void CloseCurrentWindow();
 void InitConsole();
 void ProcessInput();
 void MakeDrawCallGl();
+void SetResolutionGl();
 
 // internal constants to have platform API functions without arguments
 HINSTANCE windowHInstance;
@@ -33,6 +36,25 @@ int windowNCmdShow;
 MSG msg = {};
 bool shouldRun = true;
 HDC windowHdc;
+
+// wgl extensions
+typedef struct {
+    PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB;
+} WglExt;
+WglExt wglExt = {};
+
+#define LOAD_OPENGL_EXTENSION_INTO(name, type, target) \
+    do { \
+        target = (type)wglGetProcAddress(#name); \
+        Assert(target != NULL, "Unable to load OpenGL extension %s", #name); \
+    } while(false)
+
+#define LOAD_OPENGL_EXTENSION(name, type) LOAD_OPENGL_EXTENSION_INTO(name, type, openGlExt->name)
+#define LOAD_WGL_EXTENSION(name, type) LOAD_OPENGL_EXTENSION_INTO(name, type, wglExt.name)
+
+// windowproc utils
+#define EXTRACT_LOW16(n) (n & 0x0000FFFF);
+#define EXTRACT_HIGH16(n) (n >> 16)
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         PWSTR pCmdLine, int nCmdShow) {
@@ -66,6 +88,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     Render render = {};
     render.MakeDrawCall = MakeDrawCallGl;
     render.ClearScreen = ClearScreenGl;
+    render.DrawTriangle = DrawTriangleGl;
     platform.render = &render;
 
     return GameMain(&platform);
@@ -109,6 +132,7 @@ void CloseCurrentWindow() {
     shouldRun = false;
 }
 
+void MapAndSetResolution(LPARAM lParam);
 InputKey MapKeyCode(WPARAM wParam, LPARAM lParam);
 void MapAndSetMousePosition(LPARAM lParam);
 
@@ -116,6 +140,9 @@ LRESULT CALLBACK WindProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     switch(uMsg) {
         case WM_DESTROY:
             PostQuitMessage(0);
+            return 0;
+        case WM_SIZE:
+            MapAndSetResolution(lParam);
             return 0;
         // keys
         case WM_KEYDOWN:
@@ -153,6 +180,33 @@ LRESULT CALLBACK WindProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
 
+static void LoadOpenGlExtensions(OpenGlExt* openGlExt) {
+    LOAD_OPENGL_EXTENSION(glBindBuffer, PFNGLBINDBUFFERPROC);
+    LOAD_OPENGL_EXTENSION(glGenBuffers, PFNGLGENBUFFERSPROC);
+    LOAD_OPENGL_EXTENSION(glBufferData, PFNGLBUFFERDATAPROC);
+    LOAD_OPENGL_EXTENSION(glAttachShader, PFNGLATTACHSHADERPROC);
+    LOAD_OPENGL_EXTENSION(glCompileShader, PFNGLCOMPILESHADERPROC);
+    LOAD_OPENGL_EXTENSION(glCreateProgram, PFNGLCREATEPROGRAMPROC);
+    LOAD_OPENGL_EXTENSION(glCreateShader, PFNGLCREATESHADERPROC);
+    LOAD_OPENGL_EXTENSION(glDeleteShader, PFNGLDELETESHADERPROC);
+    LOAD_OPENGL_EXTENSION(glEnableVertexAttribArray, PFNGLENABLEVERTEXATTRIBARRAYPROC);
+    LOAD_OPENGL_EXTENSION(glLinkProgram, PFNGLLINKPROGRAMPROC);
+    LOAD_OPENGL_EXTENSION(glShaderSource, PFNGLSHADERSOURCEPROC);
+    LOAD_OPENGL_EXTENSION(glUseProgram, PFNGLUSEPROGRAMPROC);
+    LOAD_OPENGL_EXTENSION(glVertexAttribPointer, PFNGLVERTEXATTRIBPOINTERPROC);
+    LOAD_OPENGL_EXTENSION(glBindVertexArray, PFNGLBINDVERTEXARRAYPROC);
+    LOAD_OPENGL_EXTENSION(glGenVertexArrays, PFNGLGENVERTEXARRAYSPROC);
+    LOAD_OPENGL_EXTENSION(glGetShaderiv, PFNGLGETSHADERIVPROC);
+    LOAD_OPENGL_EXTENSION(glGetShaderInfoLog, PFNGLGETSHADERINFOLOGPROC);
+    LOAD_OPENGL_EXTENSION(glGetProgramiv, PFNGLGETPROGRAMIVPROC);
+    LOAD_OPENGL_EXTENSION(glGetProgramInfoLog, PFNGLGETPROGRAMINFOLOGPROC);
+    LOAD_OPENGL_EXTENSION(glBufferSubData, PFNGLBUFFERSUBDATAPROC);
+}
+
+static void LoadWglExtensions() {
+    LOAD_WGL_EXTENSION(wglCreateContextAttribsARB, PFNWGLCREATECONTEXTATTRIBSARBPROC);
+}
+
 HGLRC InitOpenGl(HDC windowHdc) {
     PIXELFORMATDESCRIPTOR pfd = {};
     pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
@@ -167,10 +221,39 @@ HGLRC InitOpenGl(HDC windowHdc) {
     PIXELFORMATDESCRIPTOR actualPfd = {};
     DescribePixelFormat(windowHdc, pixelFormat, sizeof(PIXELFORMATDESCRIPTOR), &actualPfd);
 
-    HGLRC hglrc = wglCreateContext(windowHdc);
-    wglMakeCurrent(windowHdc, hglrc);
+    // -- Create a context for OpenGL 3.3 --
 
-    return hglrc;
+    // set up dummy context to be able to load WGL extensions
+    HGLRC dummyContext = wglCreateContext(windowHdc);
+    wglMakeCurrent(windowHdc, dummyContext);
+
+    LoadWglExtensions();
+
+    int attributes[] = {
+        WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
+        WGL_CONTEXT_MINOR_VERSION_ARB, 3,
+        WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+        0
+    };
+
+    HGLRC actualContext = wglExt.wglCreateContextAttribsARB(windowHdc, dummyContext, attributes);
+    wglMakeCurrent(windowHdc, actualContext);
+    wglDeleteContext(dummyContext);
+
+    // -- Load the OpenGL 3.3 extensions --
+
+    OpenGlExt openGlExt = {};
+    LoadOpenGlExtensions(&openGlExt);
+    InitGraphicsGl(openGlExt);
+
+    return actualContext;
+}
+
+static void MapAndSetResolution(LPARAM lParam) {
+    int width = EXTRACT_LOW16(lParam);
+    int height = EXTRACT_HIGH16(lParam);
+
+    SetResolutionGl(width, height);
 }
 
 // -- Console --
@@ -212,7 +295,7 @@ static InputKey MapKeyCodeInRange(WPARAM vk, WPARAM vkStart, InputKey keyStart) 
 // see https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
 InputKey MapKeyCode(WPARAM wParam, LPARAM lParam) {
     int vk = wParam;
-    int scanCode = (lParam >> 16) & 0xFF;
+    int scanCode = EXTRACT_HIGH16(lParam) & 0xFF;
 
     // letters
     if (vk >= 0x41 && vk <= 0x5A) {
@@ -251,8 +334,8 @@ InputKey MapKeyCode(WPARAM wParam, LPARAM lParam) {
 
 // see https://learn.microsoft.com/en-us/windows/win32/inputdev/wm-mousemove
 void MapAndSetMousePosition(LPARAM lParam) {
-    int x = lParam & 0x0000FFFF;
-    int y = lParam >> 16;
+    int x = EXTRACT_LOW16(lParam);
+    int y = EXTRACT_HIGH16(lParam);
 
     SetMousePosition(x, y);
 }
@@ -260,5 +343,6 @@ void MapAndSetMousePosition(LPARAM lParam) {
 // -- Render --
 
 void MakeDrawCallGl() {
+    EndDrawGl();
     SwapBuffers(windowHdc);
 }

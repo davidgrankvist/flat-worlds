@@ -39,4 +39,23 @@ typedef enum {
     MouseUnknown,
 } InputMouseButton;
 
+typedef struct {
+    float x;
+    float y;
+} Vec2;
+
+typedef struct {
+    float x;
+    float y;
+    float z;
+} Vec3;
+
+// normalized colors (0 to 1)
+typedef struct {
+    float r;
+    float g;
+    float b;
+    float a;
+} Color;
+
 #endif
