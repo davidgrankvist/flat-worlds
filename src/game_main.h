@@ -27,8 +27,8 @@ typedef enum {
     KeyLeft, KeyUp, KeyRight, KeyDown,
     // special
     KeySpace, KeyEnter, KeyBackspace, KeyTab, KeyEsc,
-    // dummy
-    KeyUnknown, // 64 codes, so they fit into a u64 for now
+    // fallback value / checking number of codes
+    KeyUnknown,
 } InputKey;
 
 typedef struct {

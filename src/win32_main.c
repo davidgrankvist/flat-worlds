@@ -35,6 +35,12 @@ HDC windowHdc;
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         PWSTR pCmdLine, int nCmdShow) {
+    // set up a console for asserts
+    if (getenv("DEBUG_CONSOLE")) {
+        InitConsole();
+    }
+    Assert(KeyUnknown <= 64, "Too many key codes to fit in a u64. Please update the input buffer structure.");
+
     windowHInstance = hInstance;
     windowNCmdShow = nCmdShow;
 
@@ -144,7 +150,7 @@ void InitConsole() {
         AllocConsole();
     }
     freopen("CONOUT$", "w", stdout);
-    freopen("CONOUT$", "w", stdout);
+    freopen("CONOUT$", "w", stderr);
     freopen("CONOUT$", "r", stdin);
 }
 
