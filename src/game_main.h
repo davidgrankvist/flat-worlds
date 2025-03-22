@@ -31,6 +31,14 @@ typedef enum {
     KeyUnknown,
 } InputKey;
 
+typedef enum {
+    MouseLeft,
+    MouseRight,
+    MouseMiddle,
+    // fallback value / checking number of codes
+    MouseUnknown,
+} InputMouseButton;
+
 typedef struct {
     void (*InitWindow)();
     bool (*IsWindowOpen)();
@@ -42,6 +50,9 @@ typedef struct {
     bool (*IsKeyDown)(InputKey key);
     bool (*IsKeyPressed)(InputKey key);
     bool (*IsKeyReleased)(InputKey key);
+    bool (*IsMouseDown)(InputMouseButton btn);
+    bool (*IsMousePressed)(InputMouseButton btn);
+    bool (*IsMouseReleased)(InputMouseButton btn);
 
     Render* render;
 } Platform;

@@ -22,6 +22,9 @@ void ProcessInput();
 bool IsKeyDown(InputKey key);
 bool IsKeyPressed(InputKey key);
 bool IsKeyReleased(InputKey key);
+bool IsMouseDown(InputMouseButton key);
+bool IsMousePressed(InputMouseButton key);
+bool IsMouseReleased(InputMouseButton key);
 
 void MakeDrawCall();
 void ClearScreen(float r, float g, float b, float a);
@@ -39,7 +42,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     if (getenv("DEBUG_CONSOLE")) {
         InitConsole();
     }
-    Assert(KeyUnknown <= 64, "Too many key codes to fit in a u64. Please update the input buffer structure.");
+    Assert(KeyUnknown <= 64, "Too many key codes to fit in a u64. Please update the input data structure.");
+    Assert(MouseUnknown <= 8, "Too many mouse key codes to fit in a u8. Please update the input data structure.");
 
     windowHInstance = hInstance;
     windowNCmdShow = nCmdShow;
@@ -55,6 +59,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     platform.IsKeyDown = IsKeyDown;
     platform.IsKeyPressed = IsKeyPressed;
     platform.IsKeyReleased = IsKeyReleased;
+    platform.IsMouseDown = IsMouseDown;
+    platform.IsMousePressed = IsMousePressed;
+    platform.IsMouseReleased = IsMouseReleased;
 
     Render render = {};
     render.MakeDrawCall = MakeDrawCall;
@@ -106,11 +113,15 @@ void CloseCurrentWindow() {
     shouldRun = false;
 }
 
+void SetMouseDown(InputMouseButton btn);
+void SetMouseUp(InputMouseButton btn);
+
 LRESULT CALLBACK WindProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     switch(uMsg) {
         case WM_DESTROY:
             PostQuitMessage(0);
             return 0;
+        // keys
         case WM_KEYDOWN:
         case WM_SYSKEYDOWN:
             SetKeyDown(MapKeyCode(wParam, lParam));
@@ -118,6 +129,25 @@ LRESULT CALLBACK WindProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         case WM_KEYUP:
         case WM_SYSKEYUP:
             SetKeyUp(MapKeyCode(wParam, lParam));
+            return 0;
+        // mouse
+        case WM_LBUTTONDOWN:
+            SetMouseDown(MouseLeft);
+            return 0;
+        case WM_LBUTTONUP:
+            SetMouseUp(MouseLeft);
+            return 0;
+        case WM_RBUTTONDOWN:
+            SetMouseDown(MouseRight);
+            return 0;
+        case WM_RBUTTONUP:
+            SetMouseUp(MouseRight);
+            return 0;
+        case WM_MBUTTONDOWN:
+            SetMouseDown(MouseMiddle);
+            return 0;
+        case WM_MBUTTONUP:
+            SetMouseUp(MouseMiddle);
             return 0;
     }
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
@@ -156,18 +186,24 @@ void InitConsole() {
 
 // -- Input --
 
-/*
- * The input buffer is packed into a u64 with one bit per key.
- * bit set in inputKeys[0] = currently down.
- * bit set in inputKeys[1] = previously down.
- *
- * This works as long as the InputKey enum has at most 64 values.
- */
-uint64_t inputKeys[2];
-#define KEY_TO_BIT(k) (1 << k)
-#define IS_KEY_SET(k, input) (input & KEY_TO_BIT(k))
+// call at the beginning of ProcessInput to make sure things like previous states are updated
 void UpdateInputBuffers();
 
+// helpers to toggle 1-bit key/button states
+#define KEY_TO_BIT(k) (1 << k)
+#define IS_KEY_SET(k, input) (input & KEY_TO_BIT(k))
+
+// current / previous key states are set with single bits (1 means down)
+typedef struct {
+    // keys
+    uint64_t inputKeys[2];
+
+    // mouse
+    int mouseX;
+    int mouseY;
+    uint8_t inputMouseButtons[2];
+} InputState;
+InputState inputState = {};
 
 void ProcessInput() {
     UpdateInputBuffers();
@@ -233,29 +269,52 @@ InputKey MapKeyCode(WPARAM wParam, LPARAM lParam) {
 }
 
 void UpdateInputBuffers() {
-    inputKeys[1] = inputKeys[0];
+    inputState.inputKeys[1] = inputState.inputKeys[0];
+    inputState.inputMouseButtons[1] = inputState.inputMouseButtons[0];
 }
 
 void SetKeyDown(InputKey key) {
-    inputKeys[0] |= KEY_TO_BIT(key);
+    inputState.inputKeys[0] |= KEY_TO_BIT(key);
 }
 
 void SetKeyUp(InputKey key) {
-    inputKeys[0] &= ~KEY_TO_BIT(key);
+    inputState.inputKeys[0] &= ~KEY_TO_BIT(key);
 }
 
 bool IsKeyDown(InputKey key) {
-    return IS_KEY_SET(key, inputKeys[0]);
+    return IS_KEY_SET(key, inputState.inputKeys[0]);
 }
 
 bool IsKeyPressed(InputKey key) {
-    return IS_KEY_SET(key, inputKeys[0])
-        && !IS_KEY_SET(key, inputKeys[1]);
+    return IS_KEY_SET(key, inputState.inputKeys[0])
+        && !IS_KEY_SET(key, inputState.inputKeys[1]);
 }
 
 bool IsKeyReleased(InputKey key) {
-    return !IS_KEY_SET(key, inputKeys[0])
-        && IS_KEY_SET(key, inputKeys[1]);
+    return !IS_KEY_SET(key, inputState.inputKeys[0])
+        && IS_KEY_SET(key, inputState.inputKeys[1]);
+}
+
+void SetMouseDown(InputMouseButton btn) {
+    inputState.inputMouseButtons[0] |= KEY_TO_BIT(btn);
+}
+
+void SetMouseUp(InputMouseButton btn) {
+    inputState.inputMouseButtons[0] &= ~KEY_TO_BIT(btn);
+}
+
+bool IsMouseDown(InputMouseButton btn) {
+    return IS_KEY_SET(btn, inputState.inputMouseButtons[0]);
+}
+
+bool IsMousePressed(InputMouseButton btn) {
+    return IS_KEY_SET(btn, inputState.inputMouseButtons[0])
+        && !IS_KEY_SET(btn, inputState.inputMouseButtons[1]);
+}
+
+bool IsMouseReleased(InputMouseButton btn) {
+    return !IS_KEY_SET(btn, inputState.inputMouseButtons[0])
+        && IS_KEY_SET(btn, inputState.inputMouseButtons[1]);
 }
 
 // -- Render --
