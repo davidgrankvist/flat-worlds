@@ -1,3 +1,8 @@
+/*
+ * These are some common definitions that are needed in both the platform
+ * and game code.
+ */
+
 #ifndef common_h
 #define common_h
 
@@ -8,6 +13,7 @@
 
 void Assert(bool b, const char* format, ...);
 
+// platform independent key codes
 typedef enum {
     // letters
     KeyA, KeyB, KeyC, KeyD, KeyE, KeyF, KeyG, KeyH,
@@ -31,6 +37,7 @@ typedef enum {
     KeyUnknown,
 } InputKey;
 
+// platform independent mouse input
 typedef enum {
     MouseLeft,
     MouseRight,

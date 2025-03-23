@@ -1,3 +1,10 @@
+/*
+ * This header defines input related utilities that are platform independent.
+ * The idea is to support the platform layer implementations with some shared code.
+ *
+ * Each platform layer is responsible for mapping to the common key code format.
+ */
+
 #ifndef input_h
 #define input_h
 

@@ -10,10 +10,15 @@
 
 #include "common.h"
 
-// render part of platform API
+/*
+ * Render part of platform API.
+ *
+ * Use calls like DrawTriangle to configure pending graphics to draw.
+ * At the end of the frame, call MakeDrawCall to draw all of the pending graphics to the screen.
+ */
 typedef struct {
-    void (*MakeDrawCall)(); 
     void (*ClearScreen)(Color color);
+    void (*MakeDrawCall)(); 
     // draw a 2D triangle using screen coordinates
     void (*DrawTriangle)(Vec2 a, Vec2 b, Vec2 c, Color color);
 } Render;
@@ -27,6 +32,11 @@ typedef struct {
     void (*InitConsole)();
 
     void (*ProcessInput)();
+    /*
+     * Down = currently held down
+     * Pressed = changed from up to down
+     * Released = changed from down to up
+     */
     bool (*IsKeyDown)(InputKey key);
     bool (*IsKeyPressed)(InputKey key);
     bool (*IsKeyReleased)(InputKey key);
