@@ -11,17 +11,8 @@ There are some extension headers that define the types of the dynamically loaded
 
 ### Includes
 
-Include: `#include <gl/glext.h>`
-Purpose: Render backend calls. Platform independent, but varies for different OpenGL versions.
-Location: vendor/include/gl/glext.h
-Source: <https://github.com/KhronosGroup/OpenGL-Registry/blob/main/api/GL/glext.h>
-
-Include: `#include <KHR/khrplatform.h>`
-Purpose: This is a dependency for glext.h.
-Location: vendor/include/KHR/khrplatform.h
-Source: <https://registry.khronos.org/EGL/api/KHR/khrplatform.h>
-
-Include: `#include <gl/wglext.h>`
-Purpose: WGL calls. This is for Windows specific OpenGL initialization.
-Location: vendor/include/gl/wglext.h
-Source: <https://github.com/KhronosGroup/OpenGL-Registry/blob/main/api/GL/wglext.h>
+| Include | Purpose | Location | Source |
+| ------- | ------- | -------- | ------ |
+| `#include <gl/glext.h>` | Render backend calls. Platform independent, but varies for different OpenGL versions.| vendor/include/gl/glext.h | [OpenGL registry](https://github.com/KhronosGroup/OpenGL-Registry/blob/main/api/GL/glext.h) |
+| `#include <KHR/khrplatform.h>` | This is a dependency for glext.h.  | vendor/include/KHR/khrplatform.h | [Khronos registry](https://registry.khronos.org/EGL/api/KHR/khrplatform.h) |
+| `#include <gl/wglext.h>` | WGL calls. This is for Windows specific OpenGL initialization.  | vendor/include/gl/wglext.h | [OpenGL registry](https://github.com/KhronosGroup/OpenGL-Registry/blob/main/api/GL/wglext.h) |
