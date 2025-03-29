@@ -11,7 +11,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// -- Utils --
+
 void Assert(bool b, const char* format, ...);
+
+// -- Input --
 
 // platform independent key codes
 typedef enum {
@@ -46,6 +50,18 @@ typedef enum {
     MouseUnknown,
 } InputMouseButton;
 
+// -- Graphics --
+
+// normalized colors (0 to 1)
+typedef struct {
+    float r;
+    float g;
+    float b;
+    float a;
+} Color;
+
+// -- Math --
+
 typedef struct {
     float x;
     float y;
@@ -57,12 +73,15 @@ typedef struct {
     float z;
 } Vec3;
 
-// normalized colors (0 to 1)
 typedef struct {
-    float r;
-    float g;
-    float b;
-    float a;
-} Color;
+    float x;
+    float y;
+    float z;
+    float w;
+} Vec4;
+
+typedef struct {
+    float m[4][4];
+} Mat4;
 
 #endif

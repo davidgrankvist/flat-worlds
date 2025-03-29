@@ -1,6 +1,8 @@
 #include <stdarg.h>
 #include "common.h"
 
+// -- Utils --
+
 void Assert(bool b, const char* format, ...) {
     if (!b) {
         va_list args;
