@@ -1,4 +1,5 @@
 #include "opengl_render.h"
+#include "mathz.h"
 
 // provided by platform layer
 OpenGlExt openGlExt;
@@ -14,18 +15,23 @@ int screenHeight = 0;
  */
 GLuint VAO, VBO;
 GLfloat* vertices = NULL;
-int maxVertices = 1000; // constant size for now, should resize on demand
+int maxVertices = 1000; // constant size for now
 int valuesPerVertex = 7; // 3 coordinates + 4 color channels
-int maxVertexBuffer = 1000 * 7;
 int currentVertexCount = 0;
 
-// the default shader program is a pass-through of the given position/color
+/*
+ * The default shader program transforms the position
+ * and passes through the color.
+ *
+ * By default the transform is just the identity matrix.
+ */
 const char* defaultVertexShaderSrc = "#version 330 core\n"
     "layout(location = 0) in vec3 position;\n"
     "layout(location = 1) in vec4 color;\n"
-    "out vec4 fragColor;"
+    "uniform mat4 transform;\n"
+    "out vec4 fragColor;\n"
     "void main() {\n"
-    "    gl_Position = vec4(position, 1.0);\n"
+    "    gl_Position = transform * vec4(position, 1.0);\n"
     "    fragColor = color;\n"
     "}";
 
@@ -36,10 +42,31 @@ const char* defaultFragmentShaderSrc = "#version 330 core\n"
     "    FragColor = fragColor;\n"
     "}";
 GLuint defaultShaderProgram;
+GLint transformLoc;
+
+typedef struct {
+    float m[16]; 
+} RenderTransform;
+RenderTransform transform = {{0}};
+
+static inline int Mat4PosToIndex(int x, int y) {
+    return x + y * 4;
+}
+
+static RenderTransform Mat4ToRenderTransform(Mat4 mat) {
+    RenderTransform trans = {{0}};
+    for (int y = 0; y < 4; y++) {
+        for (int x = 0; x < 4; x++) {
+            trans.m[Mat4PosToIndex(x, y)] = mat.m[y][x]; 
+        }
+    }
+
+    return trans;
+}
 
 static void AssertNoGlError() {
     GLenum err = glGetError();
-    Assert(err == GL_NO_ERROR, "OpenGL error. glGetError returned code %d", err);
+    Assert(err == GL_NO_ERROR, "OpenGL error. glGetError returned code %x", err);
 }
 
 void SetResolutionGl(int width, int height) {
@@ -76,6 +103,12 @@ void InitGraphicsGl(OpenGlExt ext) {
     openGlExt.glDeleteShader(vertexShader);
     openGlExt.glDeleteShader(fragmentShader);
 
+    openGlExt.glUseProgram(defaultShaderProgram);
+
+    transformLoc = openGlExt.glGetUniformLocation(defaultShaderProgram, "transform");
+    transform = Mat4ToRenderTransform(Mat4Identity());
+    openGlExt.glUniformMatrix4fv(transformLoc, 1, false, transform.m);
+
     // -- Vertex buffer for triangles --
 
     openGlExt.glGenVertexArrays(1, &VAO);
@@ -83,7 +116,7 @@ void InitGraphicsGl(OpenGlExt ext) {
     openGlExt.glBindVertexArray(VAO);
     openGlExt.glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
-    int maxVertexBufferSize = maxVertexBuffer * sizeof(GLfloat);
+    int maxVertexBufferSize = maxVertices * valuesPerVertex * sizeof(GLfloat);
     vertices = (GLfloat*)malloc(maxVertexBufferSize);
     Assert(vertices != NULL, "Failed to allocate vertex buffer");
 
@@ -96,23 +129,13 @@ void InitGraphicsGl(OpenGlExt ext) {
     openGlExt.glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, valuesPerVertex * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
     openGlExt.glEnableVertexAttribArray(1);
 
-    //openGlExt.glBindBuffer(GL_ARRAY_BUFFER, 0);
-    //openGlExt.glBindVertexArray(0);
-
     AssertNoGlError();
 }
 
 void EndDrawGl() {
-    openGlExt.glUseProgram(defaultShaderProgram);
-
-    //openGlExt.glBindVertexArray(VAO);
-    //openGlExt.glBindBuffer(GL_ARRAY_BUFFER, VBO);
     openGlExt.glBufferSubData(GL_ARRAY_BUFFER, 0, currentVertexCount * valuesPerVertex * sizeof(GLfloat), vertices);
 
     glDrawArrays(GL_TRIANGLES, 0, currentVertexCount);
-
-    //openGlExt.glBindBuffer(GL_ARRAY_BUFFER, 0);
-    //openGlExt.glBindVertexArray(0);
 
     AssertNoGlError();
     currentVertexCount = 0;

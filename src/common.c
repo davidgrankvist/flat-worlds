@@ -9,7 +9,7 @@ void Assert(bool b, const char* format, ...) {
         va_start(args, format);
         vfprintf(stderr, format, args);
         va_end(args);
-        fputs("\n", stderr);
+        fprintf(stderr, "\nat %s:%d\n", __FILE__, __LINE__);
 
         exit(1);
     }

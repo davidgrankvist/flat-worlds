@@ -43,6 +43,8 @@ typedef struct {
     PFNGLGETPROGRAMIVPROC glGetProgramiv;
     PFNGLGETPROGRAMINFOLOGPROC glGetProgramInfoLog;
     PFNGLBUFFERSUBDATAPROC glBufferSubData;
+    PFNGLGETUNIFORMLOCATIONPROC glGetUniformLocation;
+    PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv;
 } OpenGlExt;
 
 void InitGraphicsGl(OpenGlExt openglExt); // call at window creation
