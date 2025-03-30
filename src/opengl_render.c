@@ -17,7 +17,8 @@ GLuint VAO, VBO;
 GLfloat* vertices = NULL;
 int maxVertices = 1000; // constant size for now
 int valuesPerVertex = 7; // 3 coordinates + 4 color channels
-int currentVertexCount = 0;
+int currentVertexCount = 0; // total vertex count in frame
+int currentVertexStart = 0; // start index for individual draw calls
 
 /*
  * The default shader program does following:
@@ -158,12 +159,21 @@ static void UpdateOrtho() {
 }
 
 void EndDrawGl() {
-    openGlExt.glBufferSubData(GL_ARRAY_BUFFER, 0, currentVertexCount * valuesPerVertex * sizeof(GLfloat), vertices);
-    glDrawArrays(GL_TRIANGLES, 0, currentVertexCount);
+    int length = currentVertexCount - currentVertexStart;
+    int offset = currentVertexStart * valuesPerVertex * sizeof(GLfloat);
+    int size = length * valuesPerVertex * sizeof(GLfloat);
+
+    openGlExt.glBufferSubData(GL_ARRAY_BUFFER, offset, size, &vertices[currentVertexStart * valuesPerVertex]);
+    glDrawArrays(GL_TRIANGLES, currentVertexStart, length);
 
     AssertNoGlError();
-    currentVertexCount = 0;
     ResetTransform();
+    currentVertexStart = currentVertexCount;
+}
+
+void EndFrameGl() {
+    currentVertexCount = 0;
+    currentVertexStart = 0;
 }
 
 void ClearScreenGl(Color color) {

@@ -60,16 +60,13 @@ int GameMain(Platform* platform) {
         render->DrawTriangle(a2r, b2r, c2r, blue);
         render->MakeDrawCall();
 
-        /*
-         * This works on its own, but doesn't quite work combined with the other code.
-         * MakeDrawCall resets the vertex count, but we don't want to overwrite
-         * that data until we begin the next frame.
-         */
         // GPU side transform
-        //Mat4 transform = Mat4RotateAbout2(rotationCenter2, angle);
-        //render->SetTransform(transform);
-        //render->DrawTriangle(a3, b3, c3, blue);
-        //render->MakeDrawCall();
+        Mat4 transform = Mat4RotateAbout2(rotationCenter2, angle);
+        render->SetTransform(transform);
+        render->DrawTriangle(a3, b3, c3, blue);
+        render->MakeDrawCall();
+
+        render->EndFrame();
     }
 
     return 0;

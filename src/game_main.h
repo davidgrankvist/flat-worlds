@@ -13,9 +13,6 @@
 /*
  * Render part of platform API.
  *
- * Use calls like DrawTriangle to configure pending graphics to draw.
- * At the end of the frame, call MakeDrawCall to draw all of the pending graphics to the screen.
- *
  * All render coordinates (including 2D calls) are in world coordinates, left-handed XYZ:
  * - origin = bottom left
  * - X = right
@@ -24,13 +21,20 @@
  */
 typedef struct {
     void (*ClearScreen)(Color color);
-    void (*MakeDrawCall)(); 
     /*
-     * Sets a world coordinate transform to apply to all graphics in the next draw call.
-     * The transform is reset by MakeDrawCall.
+     * Issues a draw call with all of the pending graphics.
+     * Resets current transform.
+     */
+    void (*MakeDrawCall)();
+    /*
+     * Paints to the screen and resets internal rendering state.
+     * Should only be called once per frame.
+     */
+    void (*EndFrame)();
+    /*
+     * Sets transform to apply to all graphics in the next draw call.
      */
     void (*SetTransform)(Mat4 mat);
-    // draw a 2D triangle
     void (*DrawTriangle)(Vec2 a, Vec2 b, Vec2 c, Color color);
 } Render;
 

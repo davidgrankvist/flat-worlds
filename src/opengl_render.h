@@ -56,5 +56,6 @@ void SetResolutionGl(int width, int height); // call at window resize
 void ClearScreenGl(Color color);
 void DrawTriangleGl(Vec2 a, Vec2 b, Vec2 c, Color color);
 void SetTransformGl(Mat4 mat);
+void EndFrameGl();
 
 #endif

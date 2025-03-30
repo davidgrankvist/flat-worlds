@@ -29,10 +29,11 @@ int GetClientWidth();
 int GetClientHeight();
 void InitConsole();
 void ProcessInput();
-void MakeDrawCallGl();
 void SetTransform(Mat4 mat);
+void EndFrame();
 
 void SetResolutionGl(int width, int height);
+void MakeDrawCallGl();
 
 // internal constants to have platform API functions without arguments
 HINSTANCE windowHInstance;
@@ -99,6 +100,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     render.ClearScreen = ClearScreenGl;
     render.DrawTriangle = DrawTriangleGl;
     render.SetTransform = SetTransformGl;
+    render.EndFrame = EndFrame;
     platform.render = &render;
 
     return GameMain(&platform);
@@ -364,5 +366,9 @@ void MapAndSetMousePosition(LPARAM lParam) {
 
 void MakeDrawCallGl() {
     EndDrawGl();
+}
+
+void EndFrame() {
+    EndFrameGl();
     SwapBuffers(windowHdc);
 }
