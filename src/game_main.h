@@ -13,11 +13,11 @@
 /*
  * Render part of platform API.
  *
- * All render coordinates (including 2D calls) are in world coordinates, left-handed XYZ:
+ * All render coordinates (including 2D calls) are in world coordinates (left-handed):
  * - origin = bottom left
  * - X = right
  * - Y = upwards
- * - Z = away from the screen
+ * - Z = towards the screen
  */
 typedef struct {
     void (*ClearScreen)(Color color);

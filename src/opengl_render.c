@@ -9,9 +9,9 @@ static int clientHeight = 0;
 /*
  * For simplicity, there is just one big buffer of triangle vertices.
  *
- * The vertex count resets each frame. At the end of the frame, 
- * the first currentVertexCount vertices in the buffer are included
- * in the draw call.
+ * The vertex count resets each frame. When a draw call is invoked, 
+ * the range of vertices specified by currentVertexCount and currentVertexStart 
+ * are included in the draw call.
  */
 GLuint VAO, VBO;
 GLfloat* vertices = NULL;
@@ -153,7 +153,7 @@ static void ResetTransform() {
 }
 
 static void UpdateOrtho() {
-    Mat4 mat = Mat4Ortho(0, clientWidth, 0, clientHeight, 1, -1); // only 2D for now
+    Mat4 mat = Mat4Ortho(0, clientWidth, 0, clientHeight, -1, 1); // only 2D for now
     RenderTransform transform = Mat4ToRenderTransform(mat);
     openGlExt.glUniformMatrix4fv(orthoLoc, 1, false, transform.m);
 }
