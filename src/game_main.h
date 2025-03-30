@@ -15,21 +15,41 @@
  *
  * Use calls like DrawTriangle to configure pending graphics to draw.
  * At the end of the frame, call MakeDrawCall to draw all of the pending graphics to the screen.
+ *
+ * All render coordinates (including 2D calls) are in world coordinates, left-handed XYZ:
+ * - origin = bottom left
+ * - X = right
+ * - Y = upwards
+ * - Z = away from the screen
  */
 typedef struct {
     void (*ClearScreen)(Color color);
     void (*MakeDrawCall)(); 
-    // draw a 2D triangle using screen coordinates
+    /*
+     * Sets a world coordinate transform to apply to all graphics in the next draw call.
+     * The transform is reset by MakeDrawCall.
+     */
+    void (*SetTransform)(Mat4 mat);
+    // draw a 2D triangle
     void (*DrawTriangle)(Vec2 a, Vec2 b, Vec2 c, Color color);
 } Render;
 
 // platform API
 typedef struct {
+    // -- Window --
+
     void (*InitWindow)();
     bool (*IsWindowOpen)();
     void (*CloseCurrentWindow)();
+    /*
+     * Dimensions of window client area to render to.
+     */
+    int (*GetClientWidth)();
+    int (*GetClientHeight)();
 
     void (*InitConsole)();
+
+    // -- Input --
 
     void (*ProcessInput)();
     /*
@@ -46,6 +66,8 @@ typedef struct {
     // mouse position in screen coordinates
     int (*GetMouseInputX)();
     int (*GetMouseInputY)();
+
+    // -- Graphics --
 
     Render* render;
 } Platform;

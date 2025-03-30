@@ -47,10 +47,14 @@ typedef struct {
     PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv;
 } OpenGlExt;
 
+// internal utilities for platform code
 void InitGraphicsGl(OpenGlExt openglExt); // call at window creation
 void EndDrawGl(); // call before swapping buffers
 void SetResolutionGl(int width, int height); // call at window resize
+
+// render API
 void ClearScreenGl(Color color);
 void DrawTriangleGl(Vec2 a, Vec2 b, Vec2 c, Color color);
+void SetTransformGl(Mat4 mat);
 
 #endif

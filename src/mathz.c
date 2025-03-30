@@ -191,15 +191,32 @@ Vec4 Vec4Transform(Vec4 vec, Mat4 transform) {
     return result;
 }
 
-Vec2 Vec2RotateAbout(Vec2 vec, Vec2 center, float angle) {
-    Vec2 centerInverse = Vec2Scale(center, -1);  
+Mat4 Mat4RotateAbout2(Vec2 center, float angle) {
+    Vec2 centerInverse = Vec2Scale(center, -1);
     Mat4 translate = Mat4Translate2(centerInverse);
     Mat4 rotate = Mat4RotateZ(angle);
     Mat4 translateBack = Mat4Translate2(center);
 
     Mat4 transforms[] = { translate, rotate, translateBack };
     Mat4 transform = Mat4MultiplyAllRev(transforms, 3);
+    return transform;
+}
 
+Vec2 Vec2RotateAbout(Vec2 vec, Vec2 center, float angle) {
+    Mat4 transform = Mat4RotateAbout2(center, angle);
     Vec2 result = Vec2Transform(vec, transform);
     return result;
+}
+
+Mat4 Mat4Ortho(float left, float right,
+        float bottom, float top,
+        float near, float far) {
+    Mat4 transform =
+    {{
+         { 2 / (right - left), 0, 0, -(right + left) / (right - left) },
+         { 0, 2 / (top - bottom), 0, -(top + bottom) / (top - bottom) },
+         { 0, 0, -2 / (far - near), -(far + near) / (far - near) },
+         { 0, 0, 0, 1.0f }
+     }};
+    return transform;
 }

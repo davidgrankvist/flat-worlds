@@ -3,8 +3,8 @@
 
 // provided by platform layer
 OpenGlExt openGlExt;
-int screenWidth = 0;
-int screenHeight = 0;
+static int clientWidth = 0;
+static int clientHeight = 0;
 
 /*
  * For simplicity, there is just one big buffer of triangle vertices.
@@ -20,18 +20,19 @@ int valuesPerVertex = 7; // 3 coordinates + 4 color channels
 int currentVertexCount = 0;
 
 /*
- * The default shader program transforms the position
- * and passes through the color.
- *
- * By default the transform is just the identity matrix.
+ * The default shader program does following:
+ * - convert world coordinates to NDC (orthographic projection)
+ * - apply a user defined transform (defaults to the identity matrix)
+ * - pass through the given position and color
  */
 const char* defaultVertexShaderSrc = "#version 330 core\n"
     "layout(location = 0) in vec3 position;\n"
     "layout(location = 1) in vec4 color;\n"
+    "uniform mat4 ortho;\n"
     "uniform mat4 transform;\n"
     "out vec4 fragColor;\n"
     "void main() {\n"
-    "    gl_Position = transform * vec4(position, 1.0);\n"
+    "    gl_Position = ortho * transform * vec4(position, 1.0);\n"
     "    fragColor = color;\n"
     "}";
 
@@ -42,27 +43,18 @@ const char* defaultFragmentShaderSrc = "#version 330 core\n"
     "    FragColor = fragColor;\n"
     "}";
 GLuint defaultShaderProgram;
+GLint orthoLoc;
 GLint transformLoc;
 
+// OpenGL friendly flattened 4x4 matrix
 typedef struct {
     float m[16]; 
 } RenderTransform;
-RenderTransform transform = {{0}};
+RenderTransform defaultTransform = {0};
 
-static inline int Mat4PosToIndex(int x, int y) {
-    return x + y * 4;
-}
-
-static RenderTransform Mat4ToRenderTransform(Mat4 mat) {
-    RenderTransform trans = {{0}};
-    for (int y = 0; y < 4; y++) {
-        for (int x = 0; x < 4; x++) {
-            trans.m[Mat4PosToIndex(x, y)] = mat.m[y][x]; 
-        }
-    }
-
-    return trans;
-}
+static RenderTransform Mat4ToRenderTransform(Mat4 mat);
+static void ResetTransform();
+static void UpdateOrtho();
 
 static void AssertNoGlError() {
     GLenum err = glGetError();
@@ -71,8 +63,9 @@ static void AssertNoGlError() {
 
 void SetResolutionGl(int width, int height) {
     glViewport(0, 0, width, height);
-    screenWidth = width;
-    screenHeight = height;
+    clientWidth = width;
+    clientHeight = height;
+    UpdateOrtho();
 }
 
 void InitGraphicsGl(OpenGlExt ext) {
@@ -105,9 +98,11 @@ void InitGraphicsGl(OpenGlExt ext) {
 
     openGlExt.glUseProgram(defaultShaderProgram);
 
+    orthoLoc = openGlExt.glGetUniformLocation(defaultShaderProgram, "ortho");
+    UpdateOrtho();
     transformLoc = openGlExt.glGetUniformLocation(defaultShaderProgram, "transform");
-    transform = Mat4ToRenderTransform(Mat4Identity());
-    openGlExt.glUniformMatrix4fv(transformLoc, 1, false, transform.m);
+    defaultTransform = Mat4ToRenderTransform(Mat4Identity());
+    ResetTransform();
 
     // -- Vertex buffer for triangles --
 
@@ -132,13 +127,43 @@ void InitGraphicsGl(OpenGlExt ext) {
     AssertNoGlError();
 }
 
+static inline int Mat4PosToIndex(int x, int y) {
+    return x * 4 + y; // transpose, because OpenGL matrices are column-major
+}
+
+static RenderTransform Mat4ToRenderTransform(Mat4 mat) {
+    RenderTransform trans = {{0}};
+    for (int y = 0; y < 4; y++) {
+        for (int x = 0; x < 4; x++) {
+            trans.m[Mat4PosToIndex(x, y)] = mat.m[y][x];
+        }
+    }
+
+    return trans;
+}
+
+void SetTransformGl(Mat4 mat) {
+    RenderTransform transform = Mat4ToRenderTransform(mat);
+    openGlExt.glUniformMatrix4fv(transformLoc, 1, false, transform.m);
+}
+
+static void ResetTransform() {
+    openGlExt.glUniformMatrix4fv(transformLoc, 1, false, defaultTransform.m);
+}
+
+static void UpdateOrtho() {
+    Mat4 mat = Mat4Ortho(0, clientWidth, 0, clientHeight, 1, -1); // only 2D for now
+    RenderTransform transform = Mat4ToRenderTransform(mat);
+    openGlExt.glUniformMatrix4fv(orthoLoc, 1, false, transform.m);
+}
+
 void EndDrawGl() {
     openGlExt.glBufferSubData(GL_ARRAY_BUFFER, 0, currentVertexCount * valuesPerVertex * sizeof(GLfloat), vertices);
-
     glDrawArrays(GL_TRIANGLES, 0, currentVertexCount);
 
     AssertNoGlError();
     currentVertexCount = 0;
+    ResetTransform();
 }
 
 void ClearScreenGl(Color color) {
@@ -146,26 +171,15 @@ void ClearScreenGl(Color color) {
     glClear(GL_COLOR_BUFFER_BIT);
  }
 
-static inline float ScreenToClipX(float screenX) {
-    return 2 * (screenX / screenWidth) - 1;
-}
-
-static inline float ScreenToClipY(float screenY) {
-    return 1 - 2 * (screenY / screenHeight);
-}
-
 void DrawTriangleGl(Vec2 a, Vec2 b, Vec2 c, Color color) {
-    Assert(currentVertexCount + 3 <= maxVertices, "Too many vertices. Fix this by increasing the max vertices or by adding automatic resizing.");
+    int targetVertexCount = currentVertexCount + 3;
+    Assert(targetVertexCount <= maxVertices, "Too many vertices (%d). Fix this by increasing the max vertices or by adding automatic resizing.", targetVertexCount);
 
+    // pass in as world coordinates and let the shader program convert to NDC
     GLfloat verticesToAdd[] = {
-        ScreenToClipX(a.x), ScreenToClipY(a.y), 0.0f, 
-            color.r, color.g, color.b, color.a,
-
-        ScreenToClipX(b.x), ScreenToClipY(b.y), 0.0f, 
-            color.r, color.g, color.b, color.a,
-
-        ScreenToClipX(c.x), ScreenToClipY(c.y), 0.0f, 
-            color.r, color.g, color.b, color.a
+        a.x, a.y, 0.0f, color.r, color.g, color.b, color.a,
+        b.x, b.y, 0.0f, color.r, color.g, color.b, color.a,
+        c.x, c.y, 0.0f, color.r, color.g, color.b, color.a
     };
 
     memcpy(&vertices[currentVertexCount * valuesPerVertex], verticesToAdd, sizeof(verticesToAdd));

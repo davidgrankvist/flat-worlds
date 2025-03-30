@@ -25,10 +25,14 @@
 void InitWindow();
 bool IsWindowOpen();
 void CloseCurrentWindow();
+int GetClientWidth();
+int GetClientHeight();
 void InitConsole();
 void ProcessInput();
 void MakeDrawCallGl();
-void SetResolutionGl();
+void SetTransform(Mat4 mat);
+
+void SetResolutionGl(int width, int height);
 
 // internal constants to have platform API functions without arguments
 HINSTANCE windowHInstance;
@@ -36,6 +40,9 @@ int windowNCmdShow;
 MSG msg = {};
 bool shouldRun = true;
 HDC windowHdc;
+
+static int clientWidth = 0;
+static int clientHeight = 0;
 
 // wgl extensions
 typedef struct {
@@ -72,6 +79,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     platform.InitWindow = InitWindow;
     platform.IsWindowOpen = IsWindowOpen;
     platform.CloseCurrentWindow = CloseCurrentWindow;
+    platform.GetClientWidth = GetClientWidth;
+    platform.GetClientHeight = GetClientHeight;
 
     platform.InitConsole = InitConsole;
 
@@ -89,6 +98,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     render.MakeDrawCall = MakeDrawCallGl;
     render.ClearScreen = ClearScreenGl;
     render.DrawTriangle = DrawTriangleGl;
+    render.SetTransform = SetTransformGl;
     platform.render = &render;
 
     return GameMain(&platform);
@@ -252,10 +262,18 @@ HGLRC InitOpenGl(HDC windowHdc) {
 }
 
 static void MapAndSetResolution(LPARAM lParam) {
-    int width = EXTRACT_LOW16(lParam);
-    int height = EXTRACT_HIGH16(lParam);
+    clientWidth = EXTRACT_LOW16(lParam);
+    clientHeight = EXTRACT_HIGH16(lParam);
 
-    SetResolutionGl(width, height);
+    SetResolutionGl(clientWidth, clientHeight);
+}
+
+int GetClientWidth() {
+    return clientWidth;
+}
+
+int GetClientHeight() {
+    return clientHeight;
 }
 
 // -- Console --
