@@ -4,10 +4,12 @@
 static Vec2 GetMouseWorldCoordinates(Platform* platform);
 
 int GameMain(Platform* platform) {
-    platform->InitWindow();
-    Render* render = platform->render;
+    Window window = platform->window;
+    Input input = platform->input;
+    Render render = platform->render;
 
-    platform->InitConsole();
+    window.InitWindow();
+    window.InitConsole();
     printf("Hello from GameMain!\n");
 
     Color black = (Color) { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -31,12 +33,11 @@ int GameMain(Platform* platform) {
     Vec2 c3 = (Vec2) { offs, size + offs };
     Vec2 rotationCenter2 = b3;
 
+    while (window.IsWindowOpen()) {
+        input.ProcessInput();
 
-    while (platform->IsWindowOpen()) {
-        platform->ProcessInput();
-
-        if (platform->IsKeyPressed(KeyEsc)) {
-            platform->CloseCurrentWindow();
+        if (input.IsKeyPressed(KeyEsc)) {
+            window.CloseCurrentWindow();
         }
 
         Vec2 vecMouse = GetMouseWorldCoordinates(platform);
@@ -53,29 +54,29 @@ int GameMain(Platform* platform) {
         Vec2 b2r = Vec2RotateAbout(b2, rotationCenter, angle);
         Vec2 c2r = Vec2RotateAbout(c2, rotationCenter, angle);
 
-        render->ClearScreen(black);
+        render.ClearScreen(black);
 
-        render->DrawTriangle(a, b, c, red);
-        render->DrawTriangle(a2, b2, c2, green);
-        render->DrawTriangle(a2r, b2r, c2r, blue);
-        render->MakeDrawCall();
+        render.DrawTriangle(a, b, c, red);
+        render.DrawTriangle(a2, b2, c2, green);
+        render.DrawTriangle(a2r, b2r, c2r, blue);
+        render.MakeDrawCall();
 
         // GPU side transform
         Mat4 transform = Mat4RotateAbout2(rotationCenter2, angle);
-        render->SetTransform(transform);
-        render->DrawTriangle(a3, b3, c3, blue);
-        render->MakeDrawCall();
+        render.SetTransform(transform);
+        render.DrawTriangle(a3, b3, c3, blue);
+        render.MakeDrawCall();
 
-        render->EndFrame();
+        render.EndFrame();
     }
 
     return 0;
 }
 
 static Vec2 GetMouseWorldCoordinates(Platform* platform) {
-    int posX = platform->GetMouseInputX();
-    int posY = platform->GetMouseInputY();
-    int height = platform->GetClientHeight();
+    int posX = platform->input.GetMouseInputX();
+    int posY = platform->input.GetMouseInputY();
+    int height = platform->window.GetClientHeight();
 
     Vec2 vec = { posX, height - posY };
     return vec;

@@ -10,51 +10,18 @@
 
 #include "common.h"
 
-/*
- * Render part of platform API.
- *
- * All render coordinates (including 2D calls) are in world coordinates (left-handed):
- * - origin = bottom left
- * - X = right
- * - Y = upwards
- * - Z = towards the screen
- */
 typedef struct {
-    void (*ClearScreen)(Color color);
-    /*
-     * Issues a draw call with all of the pending graphics.
-     * Resets current transform.
-     */
-    void (*MakeDrawCall)();
-    /*
-     * Paints to the screen and resets internal rendering state.
-     * Should only be called once per frame.
-     */
-    void (*EndFrame)();
-    /*
-     * Sets transform to apply to all graphics in the next draw call.
-     */
-    void (*SetTransform)(Mat4 mat);
-    void (*DrawTriangle)(Vec2 a, Vec2 b, Vec2 c, Color color);
-} Render;
-
-// platform API
-typedef struct {
-    // -- Window --
-
     void (*InitWindow)();
     bool (*IsWindowOpen)();
     void (*CloseCurrentWindow)();
-    /*
-     * Dimensions of window client area to render to.
-     */
     int (*GetClientWidth)();
     int (*GetClientHeight)();
 
     void (*InitConsole)();
+} Window;
 
-    // -- Input --
-
+typedef struct {
+    // consume input and update key up/down states, etc.
     void (*ProcessInput)();
     /*
      * Down = currently held down
@@ -70,13 +37,35 @@ typedef struct {
     // mouse position in screen coordinates
     int (*GetMouseInputX)();
     int (*GetMouseInputY)();
+} Input;
 
-    // -- Graphics --
+/*
+ * All render coordinates (including 2D calls) are in world coordinates (left-handed):
+ * - origin = bottom left
+ * - X = right
+ * - Y = up
+ * - Z = towards the screen
+ */
+typedef struct {
+    void (*ClearScreen)(Color color);
+    /*
+     * Issues a draw call with all of the pending graphics.
+     * Resets current transform.
+     */
+    void (*MakeDrawCall)();
+    // paints to the screen and resets internal rendering state
+    void (*EndFrame)();
+    // sets transform to apply to all graphics in the next draw call
+    void (*SetTransform)(Mat4 mat);
+    void (*DrawTriangle)(Vec2 a, Vec2 b, Vec2 c, Color color);
+} Render;
 
-    Render* render;
+typedef struct {
+    Window window;
+    Input input;
+    Render render;
 } Platform;
 
-// game code entrypoint
 int GameMain(Platform* platform);
 
 #endif

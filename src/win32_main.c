@@ -21,7 +21,6 @@
 
 #include <gl/wglext.h>
 
-// subset of platform API calls
 void InitWindow();
 bool IsWindowOpen();
 void CloseCurrentWindow();
@@ -35,7 +34,6 @@ void EndFrame();
 void SetResolutionGl(int width, int height);
 void MakeDrawCallGl();
 
-// internal constants to have platform API functions without arguments
 HINSTANCE windowHInstance;
 int windowNCmdShow;
 MSG msg = {};
@@ -45,7 +43,6 @@ HDC windowHdc;
 static int clientWidth = 0;
 static int clientHeight = 0;
 
-// wgl extensions
 typedef struct {
     PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB;
 } WglExt;
@@ -60,13 +57,11 @@ WglExt wglExt = {};
 #define LOAD_OPENGL_EXTENSION(name, type) LOAD_OPENGL_EXTENSION_INTO(name, type, openGlExt->name)
 #define LOAD_WGL_EXTENSION(name, type) LOAD_OPENGL_EXTENSION_INTO(name, type, wglExt.name)
 
-// windowproc utils
 #define EXTRACT_LOW16(n) (n & 0x0000FFFF);
 #define EXTRACT_HIGH16(n) (n >> 16)
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         PWSTR pCmdLine, int nCmdShow) {
-    // set up a console for asserts
     if (getenv("DEBUG_CONSOLE")) {
         InitConsole();
     }
@@ -77,23 +72,27 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     windowNCmdShow = nCmdShow;
 
     Platform platform = {};
-    platform.InitWindow = InitWindow;
-    platform.IsWindowOpen = IsWindowOpen;
-    platform.CloseCurrentWindow = CloseCurrentWindow;
-    platform.GetClientWidth = GetClientWidth;
-    platform.GetClientHeight = GetClientHeight;
 
-    platform.InitConsole = InitConsole;
+    Window window = {};
+    window.InitWindow = InitWindow;
+    window.IsWindowOpen = IsWindowOpen;
+    window.CloseCurrentWindow = CloseCurrentWindow;
+    window.GetClientWidth = GetClientWidth;
+    window.GetClientHeight = GetClientHeight;
+    window.InitConsole = InitConsole;
+    platform.window = window;
 
-    platform.ProcessInput = ProcessInput;
-    platform.IsKeyDown = IsKeyDown;
-    platform.IsKeyPressed = IsKeyPressed;
-    platform.IsKeyReleased = IsKeyReleased;
-    platform.IsMouseDown = IsMouseDown;
-    platform.IsMousePressed = IsMousePressed;
-    platform.IsMouseReleased = IsMouseReleased;
-    platform.GetMouseInputX = GetMouseInputX;
-    platform.GetMouseInputY = GetMouseInputY;
+    Input input = {};
+    input.ProcessInput = ProcessInput;
+    input.IsKeyDown = IsKeyDown;
+    input.IsKeyPressed = IsKeyPressed;
+    input.IsKeyReleased = IsKeyReleased;
+    input.IsMouseDown = IsMouseDown;
+    input.IsMousePressed = IsMousePressed;
+    input.IsMouseReleased = IsMouseReleased;
+    input.GetMouseInputX = GetMouseInputX;
+    input.GetMouseInputY = GetMouseInputY;
+    platform.input = input;
 
     Render render = {};
     render.MakeDrawCall = MakeDrawCallGl;
@@ -101,7 +100,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     render.DrawTriangle = DrawTriangleGl;
     render.SetTransform = SetTransformGl;
     render.EndFrame = EndFrame;
-    platform.render = &render;
+    platform.render = render;
 
     return GameMain(&platform);
 }
