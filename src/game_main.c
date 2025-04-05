@@ -7,10 +7,14 @@ int GameMain(Platform* platform) {
     Window window = platform->window;
     Input input = platform->input;
     Render render = platform->render;
+    FrameTimer timer = platform->timer;
 
     window.InitWindow();
     window.InitConsole();
     printf("Hello from GameMain!\n");
+
+    timer.Reset();
+    timer.SetTargetFps(60);
 
     Color black = (Color) { 0.0f, 0.0f, 0.0f, 1.0f };
     Color red = (Color) { 1.0f, 0.0f, 0.0f, 1.0f };
@@ -20,7 +24,7 @@ int GameMain(Platform* platform) {
     float size = 200.0f;
 
     float angle = 0;
-    float angleStep = 0.001;
+    float angleStep = 0.01;
 
     Vec2 a2 = (Vec2) { size, 0.0f };
     Vec2 b2 = (Vec2) { size, size };
@@ -35,6 +39,7 @@ int GameMain(Platform* platform) {
 
     while (window.IsWindowOpen()) {
         input.ProcessInput();
+        timer.SleepUntilNextFrame();
 
         if (input.IsKeyPressed(KeyEsc)) {
             window.CloseCurrentWindow();

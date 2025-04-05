@@ -14,6 +14,7 @@
 // -- Utils --
 
 void Assert(bool b, const char* format, ...);
+void AssertFail(const char* format, ...);
 
 // -- Input --
 

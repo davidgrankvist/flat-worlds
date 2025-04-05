@@ -10,5 +10,6 @@ cl src\*.c ^
     /I"vendor\include" ^
     /link ^
         user32.lib ^
+        winmm.lib ^
         gdi32.lib ^
         opengl32.lib

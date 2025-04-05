@@ -16,7 +16,6 @@ typedef struct {
     void (*CloseCurrentWindow)();
     int (*GetClientWidth)();
     int (*GetClientHeight)();
-
     void (*InitConsole)();
 } Window;
 
@@ -61,9 +60,17 @@ typedef struct {
 } Render;
 
 typedef struct {
+    void (*SetTargetFps)(int fps);
+    int (*GetFps)();
+    void (*SleepUntilNextFrame)();
+    void (*Reset)();
+} FrameTimer;
+
+typedef struct {
     Window window;
     Input input;
     Render render;
+    FrameTimer timer;
 } Platform;
 
 int GameMain(Platform* platform);

@@ -15,8 +15,10 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <timeapi.h>
 #include "input.h"
 #include "opengl_render.h"
+#include "timing.h"
 #include "game_main.h"
 
 #include <gl/wglext.h>
@@ -33,6 +35,7 @@ void EndFrame();
 
 void SetResolutionGl(int width, int height);
 void MakeDrawCallGl();
+static void InitTiming();
 
 HINSTANCE windowHInstance;
 int windowNCmdShow;
@@ -101,6 +104,14 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     render.SetTransform = SetTransformGl;
     render.EndFrame = EndFrame;
     platform.render = render;
+
+    InitTiming();
+    FrameTimer timer = {};
+    timer.SetTargetFps = SetTargetFps;
+    timer.GetFps = GetFps;
+    timer.SleepUntilNextFrame = SleepUntilNextFrame;
+    timer.Reset = ResetTimer;
+    platform.timer = timer;
 
     return GameMain(&platform);
 }
@@ -370,4 +381,63 @@ void MakeDrawCallGl() {
 void EndFrame() {
     EndFrameGl();
     SwapBuffers(windowHdc);
+}
+
+// -- Timing --
+
+static int64_t usPerSecond = 1000000;
+static int64_t usPerMs = 1000;
+static int64_t usPerTick = 0;
+
+static inline int64_t GetMicroTicks();
+static void MicroSleep(int us);
+
+static void InitTiming() {
+    MMRESULT result = timeBeginPeriod(1);
+    Assert(result == TIMERR_NOERROR, "Unable to set sleep resolution to 1 ms");
+
+    LARGE_INTEGER lpFrequency;
+    bool success = QueryPerformanceFrequency(&lpFrequency);
+    Assert(success, "Unable to check QPC frequency");
+
+    int64_t ticksPerSecond = (int64_t)lpFrequency.QuadPart;
+    Assert(ticksPerSecond >= usPerSecond, "Too low QPC frequency. Unable to use microsecond sleep.");
+
+    usPerTick = ticksPerSecond / usPerSecond;
+
+    PlatformTiming platformTiming = {};
+    platformTiming.GetMicroTicks = GetMicroTicks;
+    platformTiming.MicroSleep = MicroSleep;
+
+    InitPlatformTiming(platformTiming);
+}
+
+static inline int64_t GetTicks() {
+    LARGE_INTEGER ticks;
+    int success = QueryPerformanceCounter(&ticks);
+    Assert(success, "Failed to call QPC");
+    return ticks.QuadPart;
+}
+
+static inline int64_t GetMicroTicks() {
+    return GetTicks() / usPerTick;
+}
+
+// combine millisecond sleep and busy-wait for higher precision
+static void MicroSleep(int us) {
+    int64_t usStart = GetMicroTicks();
+
+    if (us < usPerMs) {
+        while(GetMicroTicks() - usStart < us) {}
+        return;
+    }
+
+    // win32 sleep may overshoot, so intentionally undershoot by 1ms
+    int loweredUs = us - usPerMs;
+
+    if (loweredUs / usPerMs > 0 ) {
+        Sleep(loweredUs / usPerMs);
+    }
+
+    while(GetMicroTicks() - usStart < us) {}
 }

@@ -14,3 +14,10 @@ void Assert(bool b, const char* format, ...) {
         exit(1);
     }
 }
+
+void AssertFail(const char* format, ...) {
+    va_list args;
+    va_start(args, format);
+    Assert(false, format, args);
+    va_end(args);
+}
