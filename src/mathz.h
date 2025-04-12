@@ -7,8 +7,8 @@
 
 Mat4 Mat4Identity();
 Mat4 Mat4Multiply(Mat4 first, Mat4 second);
-Mat4 Mat4MultiplyAll(Mat4 ms[], int size);
-Mat4 Mat4MultiplyAllRev(Mat4 ms[], int size);
+Mat4 Mat4MultiplyAll(Mat4 ms[], int size); // multiply in given order
+Mat4 Mat4MultiplyAllRev(Mat4 ms[], int size); // multiply in reverse order
 Mat4 Mat4Add(Mat4 first, Mat4 second);
 Mat4 Mat4Subtract(Mat4 first, Mat4 second);
 Mat4 Mat4RotateX(float angle);

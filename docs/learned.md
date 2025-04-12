@@ -41,7 +41,7 @@ For simple rendering, the client code may not need a custom shader. Instead, you
 and pass those as input to a default shader program.
 
 The default vertex shader can take in the vertex position, color, a custom transform and other projections.
-This way, the client code can pass in a lot of different data but still only run the default shader program.
+This way, the client code can implement simple graphics without worrying about the underlying shader implementation.
 
 ### Orthographic projection
 
@@ -69,3 +69,8 @@ that frame, transmit all of that data at once and issue the draw call.
 
 Sometimes you need multiple draw calls, for example when you want to change the value of a uniform or run different shader programs.
 In that case, you can have a similar scheme but also keep track of a start index for the next draw call.
+
+### Camera
+
+A camera is essentially a transform to move a viewport, rotate or scale things. If all of the necessary transformations are multiplied together in a camera system,
+then the render backend can set up the final transform without worrying about the details.

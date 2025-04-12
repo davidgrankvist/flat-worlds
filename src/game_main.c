@@ -1,7 +1,8 @@
 #include "game_main.h"
 #include "mathz.h"
 
-static Vec2 GetMouseWorldCoordinates(Platform* platform);
+static Vec2 GetMouseWorldCoordinates(Platform* platform, Vec2 origin);
+static void MoveCamera(Platform* platform, Camera2D* camera);
 
 int GameMain(Platform* platform) {
     Window window = platform->window;
@@ -37,6 +38,8 @@ int GameMain(Platform* platform) {
     Vec2 c3 = (Vec2) { offs, size + offs };
     Vec2 rotationCenter2 = b3;
 
+    Camera2D camera = {0};
+
     while (window.IsWindowOpen()) {
         input.ProcessInput();
         timer.SleepUntilNextFrame();
@@ -45,10 +48,11 @@ int GameMain(Platform* platform) {
             window.CloseCurrentWindow();
         }
 
-        Vec2 vecMouse = GetMouseWorldCoordinates(platform);
+        MoveCamera(platform, &camera);
+
+        Vec2 vecMouse = GetMouseWorldCoordinates(platform, camera.origin);
         float posX = vecMouse.x;
         float posY = vecMouse.y;
-
         Vec2 a = (Vec2) { posX, posY };
         Vec2 b = (Vec2) { posX + size, posY };
         Vec2 c = (Vec2) { posX, posY + size };
@@ -78,11 +82,33 @@ int GameMain(Platform* platform) {
     return 0;
 }
 
-static Vec2 GetMouseWorldCoordinates(Platform* platform) {
+static Vec2 GetMouseWorldCoordinates(Platform* platform, Vec2 origin) {
     int posX = platform->input.GetMouseInputX();
     int posY = platform->input.GetMouseInputY();
     int height = platform->window.GetClientHeight();
 
-    Vec2 vec = { posX, height - posY };
+    Vec2 vec = { posX + origin.x, height - posY + origin.y };
     return vec;
+}
+
+static void MoveCamera(Platform* platform, Camera2D* camera) {
+    float originStep = 4;
+
+    if (platform->input.IsKeyDown(KeyRight)) {
+        camera->origin.x += originStep;
+    }
+
+    if (platform->input.IsKeyDown(KeyLeft)) {
+        camera->origin.x -= originStep;
+    }
+
+    if (platform->input.IsKeyDown(KeyUp)) {
+        camera->origin.y += originStep;
+    }
+
+    if (platform->input.IsKeyDown(KeyDown)) {
+        camera->origin.y -= originStep;
+    }
+
+    platform->render.SetCamera2D(camera);
 }

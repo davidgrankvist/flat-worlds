@@ -49,14 +49,15 @@ typedef struct {
     void (*ClearScreen)(Color color);
     /*
      * Issues a draw call with all of the pending graphics.
-     * Resets current transform.
+     * Resets the current custom transform. The camera transform is not reset.
      */
     void (*MakeDrawCall)();
     // paints to the screen and resets internal rendering state
     void (*EndFrame)();
-    // sets transform to apply to all graphics in the next draw call
+    // sets a custom transform to apply to all graphics in the next draw call
     void (*SetTransform)(Mat4 mat);
     void (*DrawTriangle)(Vec2 a, Vec2 b, Vec2 c, Color color);
+    void (*SetCamera2D)(Camera2D* camera);
 } Render;
 
 typedef struct {

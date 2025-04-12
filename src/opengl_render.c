@@ -1,5 +1,6 @@
 #include "opengl_render.h"
 #include "mathz.h"
+#include "camera.h"
 
 // provided by platform layer
 OpenGlExt openGlExt;
@@ -22,18 +23,18 @@ int currentVertexStart = 0; // start index for individual draw calls
 
 /*
  * The default shader program does following:
- * - convert world coordinates to NDC (orthographic projection)
  * - apply a user defined transform (defaults to the identity matrix)
+ * - apply a camera transform (which includes orthographic projection to NDC coordinates)
  * - pass through the given position and color
  */
 const char* defaultVertexShaderSrc = "#version 330 core\n"
     "layout(location = 0) in vec3 position;\n"
     "layout(location = 1) in vec4 color;\n"
-    "uniform mat4 ortho;\n"
+    "uniform mat4 cameraTransform;\n"
     "uniform mat4 transform;\n"
     "out vec4 fragColor;\n"
     "void main() {\n"
-    "    gl_Position = ortho * transform * vec4(position, 1.0);\n"
+    "    gl_Position = cameraTransform * transform * vec4(position, 1.0);\n"
     "    fragColor = color;\n"
     "}";
 
@@ -44,7 +45,7 @@ const char* defaultFragmentShaderSrc = "#version 330 core\n"
     "    FragColor = fragColor;\n"
     "}";
 GLuint defaultShaderProgram;
-GLint orthoLoc;
+GLint cameraTransformLoc;
 GLint transformLoc;
 
 // OpenGL friendly flattened 4x4 matrix
@@ -55,7 +56,7 @@ RenderTransform defaultTransform = {0};
 
 static RenderTransform Mat4ToRenderTransform(Mat4 mat);
 static void ResetTransform();
-static void UpdateOrtho();
+static void UpdateCameraTransform();
 
 static void AssertNoGlError() {
     GLenum err = glGetError();
@@ -66,7 +67,8 @@ void SetResolutionGl(int width, int height) {
     glViewport(0, 0, width, height);
     clientWidth = width;
     clientHeight = height;
-    UpdateOrtho();
+    SetCameraClientArea(width, height);
+    UpdateCameraTransform();
 }
 
 void InitGraphicsGl(OpenGlExt ext) {
@@ -99,8 +101,8 @@ void InitGraphicsGl(OpenGlExt ext) {
 
     openGlExt.glUseProgram(defaultShaderProgram);
 
-    orthoLoc = openGlExt.glGetUniformLocation(defaultShaderProgram, "ortho");
-    UpdateOrtho();
+    cameraTransformLoc = openGlExt.glGetUniformLocation(defaultShaderProgram, "cameraTransform");
+    UpdateCameraTransform();
     transformLoc = openGlExt.glGetUniformLocation(defaultShaderProgram, "transform");
     defaultTransform = Mat4ToRenderTransform(Mat4Identity());
     ResetTransform();
@@ -152,10 +154,15 @@ static void ResetTransform() {
     openGlExt.glUniformMatrix4fv(transformLoc, 1, false, defaultTransform.m);
 }
 
-static void UpdateOrtho() {
-    Mat4 mat = Mat4Ortho(0, clientWidth, 0, clientHeight, -1, 1); // only 2D for now
+void SetCamera2DGl(Camera2D* camera) {
+    SetCameraTransform2D(camera);
+    UpdateCameraTransform();
+}
+
+static void UpdateCameraTransform() {
+    Mat4 mat = GetCameraTransform();
     RenderTransform transform = Mat4ToRenderTransform(mat);
-    openGlExt.glUniformMatrix4fv(orthoLoc, 1, false, transform.m);
+    openGlExt.glUniformMatrix4fv(cameraTransformLoc, 1, false, transform.m);
 }
 
 void EndDrawGl() {

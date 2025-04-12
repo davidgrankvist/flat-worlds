@@ -51,6 +51,7 @@ typedef struct {
 void InitGraphicsGl(OpenGlExt openglExt); // call at window creation
 void EndDrawGl(); // call before swapping buffers
 void SetResolutionGl(int width, int height); // call at window resize
+void SetCamera2DGl(Camera2D* camera);
 
 // render API
 void ClearScreenGl(Color color);

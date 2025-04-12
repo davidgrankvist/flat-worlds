@@ -103,6 +103,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     render.DrawTriangle = DrawTriangleGl;
     render.SetTransform = SetTransformGl;
     render.EndFrame = EndFrame;
+    render.SetCamera2D = SetCamera2DGl;
     platform.render = render;
 
     InitTiming();
