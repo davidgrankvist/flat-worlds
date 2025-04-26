@@ -191,15 +191,54 @@ Vec4 Vec4Transform(Vec4 vec, Mat4 transform) {
     return result;
 }
 
+float Vec3Magnitude(Vec3 vec) {
+    return sqrtf(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z);    
+}
+
+Vec3 Vec3Normalize(Vec3 vec) {
+   float m = Vec3Magnitude(vec); 
+   return (Vec3) { vec.x / m, vec.y / m, vec.z / m };
+}
+
+Vec3 Vec3Add(Vec3 a, Vec3 b) {
+   return (Vec3) { a.x + b.x, a.y + b.y, a.z + b.z };
+}
+
+Vec3 Vec3Sub(Vec3 a, Vec3 b) {
+   return (Vec3) { a.x - b.x, a.y - b.y, a.z - b.z };
+}
+
+Vec3 Vec3Cross(Vec3 a, Vec3 b) {
+    return (Vec3) { 
+        a.y * b.z - a.z * b.y,
+        a.z * b.x - a.x * b.z,
+        a.x * b.y - a.y * b.x
+    }; 
+}
+
+float Vec3Dot(Vec3 a, Vec3 b) {
+   return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+
 Mat4 Mat4RotateAbout2(Vec2 center, float angle) {
-    Vec2 centerInverse = Vec2Scale(center, -1);
-    Mat4 translate = Mat4Translate2(centerInverse);
+    return Mat4RotateAbout((Vec3){ center.x, center.y, 0}, angle);
+}
+
+Mat4 Mat4RotateAbout(Vec3 center, float angle) {
+    Vec3 centerInverse = Vec3Scale(center, -1);
+    Mat4 translate = Mat4Translate(centerInverse);
     Mat4 rotate = Mat4RotateZ(angle);
-    Mat4 translateBack = Mat4Translate2(center);
+    Mat4 translateBack = Mat4Translate(center);
 
     Mat4 transforms[] = { translate, rotate, translateBack };
     Mat4 transform = Mat4MultiplyAllRev(transforms, 3);
     return transform;
+}
+
+Vec3 Vec3RotateAbout(Vec3 vec, Vec3 center, float angle) {
+    Mat4 transform = Mat4RotateAbout(center, angle);
+    Vec3 result = Vec3Transform(vec, transform);
+    return result;
 }
 
 Vec2 Vec2RotateAbout(Vec2 vec, Vec2 center, float angle) {
@@ -219,4 +258,37 @@ Mat4 Mat4Ortho(float left, float right,
          { 0, 0, 0, 1.0f }
      }};
     return transform;
+}
+
+Mat4 Mat4ViewTransform(Vec3 target, Vec3 position, Vec3 worldUp) {
+    // calculate basis and translation into view space
+    Vec3 forward = Vec3Normalize(Vec3Sub(target, position));
+    Vec3 right = Vec3Normalize(Vec3Cross(worldUp, forward));
+    Vec3 up = Vec3Cross(forward, right);
+    float tx = -Vec3Dot(right, position);
+    float ty = -Vec3Dot(up, position);
+    float tz = -Vec3Dot(forward, position);
+
+    // transform from world space to view space
+    Mat4 viewTransform =
+    {{
+         { right.x, right.y, right.z, tx },
+         { up.x, up.y, up.z, ty },
+         { forward.x, forward.y, forward.z, tz },
+         { 0, 0, 0, 1.0f }
+     }};
+    
+    return viewTransform;
+}
+
+Mat4 Mat4Perspective(float fov, float aspect, float near, float far) {
+    float tanHalfFov = tanf(fov / 2);
+    Mat4 transform =
+    {{
+         { 1 / (aspect * tanHalfFov), 0, 0, 0 },
+         { 0, 1 / tanHalfFov, 0, 0 },
+         { 0, 0, (far + near) / (far - near), -(2 * far * near) / (far - near) },
+         { 0, 0, 1, 0}
+     }};
+    return transform; 
 }

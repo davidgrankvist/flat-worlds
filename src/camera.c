@@ -17,7 +17,23 @@ void SetCameraTransform2D(Camera2D* camera) {
    Vec2 origin = camera->origin; 
    Mat4 ortho = Mat4Ortho(origin.x, clientWidth + origin.x, origin.y, clientHeight + origin.y, -1, 1);
    transform = ortho;
+
    didSetCamera = true;
+}
+
+void SetCameraTransform3D(Camera3D* camera) {
+    Mat4 view = Mat4ViewTransform(camera->target, camera->position, camera->up);
+
+    float fov = 3.14 / 4;
+    float aspect = clientWidth / (float) clientHeight;
+    float near = 0.01;
+    float far = 1000;
+    Mat4 perspective = Mat4Perspective(fov, aspect, near, far);
+
+    Mat4 cameraTransform = Mat4Multiply(perspective, view);
+    transform = cameraTransform;
+
+    didSetCamera = true;
 }
 
 Mat4 GetCameraTransform() {

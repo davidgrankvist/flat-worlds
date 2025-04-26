@@ -159,6 +159,11 @@ void SetCamera2DGl(Camera2D* camera) {
     UpdateCameraTransform();
 }
 
+void SetCamera3DGl(Camera3D* camera) {
+    SetCameraTransform3D(camera);
+    UpdateCameraTransform();
+}
+
 static void UpdateCameraTransform() {
     Mat4 mat = GetCameraTransform();
     RenderTransform transform = Mat4ToRenderTransform(mat);
@@ -188,18 +193,22 @@ void ClearScreenGl(Color color) {
     glClear(GL_COLOR_BUFFER_BIT);
  }
 
-void DrawTriangleGl(Vec2 a, Vec2 b, Vec2 c, Color color) {
+void DrawTriangle3DGl(Vec3 a, Vec3 b, Vec3 c, Color color) {
     int targetVertexCount = currentVertexCount + 3;
     Assert(targetVertexCount <= maxVertices, "Too many vertices (%d). Fix this by increasing the max vertices or by adding automatic resizing.", targetVertexCount);
 
     // pass in as world coordinates and let the shader program convert to NDC
     GLfloat verticesToAdd[] = {
-        a.x, a.y, 0.0f, color.r, color.g, color.b, color.a,
-        b.x, b.y, 0.0f, color.r, color.g, color.b, color.a,
-        c.x, c.y, 0.0f, color.r, color.g, color.b, color.a
+        a.x, a.y, a.z, color.r, color.g, color.b, color.a,
+        b.x, b.y, b.z, color.r, color.g, color.b, color.a,
+        c.x, c.y, c.z, color.r, color.g, color.b, color.a
     };
 
     memcpy(&vertices[currentVertexCount * valuesPerVertex], verticesToAdd, sizeof(verticesToAdd));
 
     currentVertexCount += 3;
+}
+
+void DrawTriangle2DGl(Vec2 a, Vec2 b, Vec2 c, Color color) {
+    DrawTriangle3DGl((Vec3){ a.x, a.y, 0}, (Vec3){ b.x, b.y, 0}, (Vec3){ c.x, c.y, 0}, color);
 }

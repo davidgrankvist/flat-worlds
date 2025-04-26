@@ -56,8 +56,10 @@ typedef struct {
     void (*EndFrame)();
     // sets a custom transform to apply to all graphics in the next draw call
     void (*SetTransform)(Mat4 mat);
-    void (*DrawTriangle)(Vec2 a, Vec2 b, Vec2 c, Color color);
+    void (*DrawTriangle2D)(Vec2 a, Vec2 b, Vec2 c, Color color);
+    void (*DrawTriangle3D)(Vec3 a, Vec3 b, Vec3 c, Color color);
     void (*SetCamera2D)(Camera2D* camera);
+    void (*SetCamera3D)(Camera3D* camera);
 } Render;
 
 typedef struct {

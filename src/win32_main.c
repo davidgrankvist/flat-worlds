@@ -100,10 +100,12 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     Render render = {};
     render.MakeDrawCall = MakeDrawCallGl;
     render.ClearScreen = ClearScreenGl;
-    render.DrawTriangle = DrawTriangleGl;
+    render.DrawTriangle2D = DrawTriangle2DGl;
+    render.DrawTriangle3D = DrawTriangle3DGl;
     render.SetTransform = SetTransformGl;
     render.EndFrame = EndFrame;
     render.SetCamera2D = SetCamera2DGl;
+    render.SetCamera3D = SetCamera3DGl;
     platform.render = render;
 
     InitTiming();

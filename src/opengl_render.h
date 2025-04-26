@@ -52,10 +52,12 @@ void InitGraphicsGl(OpenGlExt openglExt); // call at window creation
 void EndDrawGl(); // call before swapping buffers
 void SetResolutionGl(int width, int height); // call at window resize
 void SetCamera2DGl(Camera2D* camera);
+void SetCamera3DGl(Camera3D* camera);
 
 // render API
 void ClearScreenGl(Color color);
-void DrawTriangleGl(Vec2 a, Vec2 b, Vec2 c, Color color);
+void DrawTriangle2DGl(Vec2 a, Vec2 b, Vec2 c, Color color);
+void DrawTriangle3DGl(Vec3 a, Vec3 b, Vec3 c, Color color);
 void SetTransformGl(Mat4 mat);
 void EndFrameGl();
 

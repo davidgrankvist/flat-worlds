@@ -1,8 +1,7 @@
 #include "game_main.h"
 #include "mathz.h"
 
-static Vec2 GetMouseWorldCoordinates(Platform* platform, Vec2 origin);
-static void MoveCamera(Platform* platform, Camera2D* camera);
+static void UpdateCamera(Input input, Camera3D* camera, Camera3D startingCamera);
 
 int GameMain(Platform* platform) {
     Window window = platform->window;
@@ -11,34 +10,31 @@ int GameMain(Platform* platform) {
     FrameTimer timer = platform->timer;
 
     window.InitWindow();
-    window.InitConsole();
-    printf("Hello from GameMain!\n");
 
     timer.Reset();
     timer.SetTargetFps(60);
 
-    Color black = (Color) { 0.0f, 0.0f, 0.0f, 1.0f };
-    Color red = (Color) { 1.0f, 0.0f, 0.0f, 1.0f };
-    Color green = (Color) { 0.0f, 1.0f, 0.0f, 1.0f };
-    Color blue = (Color) { 0.0f, 0.0f, 1.0f, 1.0f };
+    Color black = (Color) { 0, 0, 0, 1 };
+    Color red = (Color) { 1, 0, 0, 1 };
+    Color green = (Color) { 0, 1, 0, 1 };
+    Color blue = (Color) { 0, 0, 1, 1 };
+    Color purple = (Color) { 1, 0, 1, 1 };
 
-    float size = 200.0f;
+    // origin reference
+    float refSize = 50;
+    Vec3 aRef = { 0, 0, 0 };
+    Vec3 bRef = { refSize, 0, 0.0f };
+    Vec3 cRef = { refSize, refSize, 0.0f };
+    Vec3 aRef2 = { 0, 0, 0 };
+    Vec3 bRef2 = { -refSize, 0, 0.0f };
+    Vec3 cRef2 = { -refSize, -refSize, 0.0f };
 
-    float angle = 0;
-    float angleStep = 0.01;
+    Camera3D camera3D = {0};
+    camera3D.position = (Vec3) { 0, 0, -250 };
+    camera3D.target = (Vec3) { 0, 0, 0 };
+    camera3D.up = (Vec3) { 0, 1, 0};
 
-    Vec2 a2 = (Vec2) { size, 0.0f };
-    Vec2 b2 = (Vec2) { size, size };
-    Vec2 c2 = (Vec2) { 0.0f, size };
-    Vec2 rotationCenter = b2;
-
-    int offs = 100;
-    Vec2 a3 = (Vec2) { size + offs, offs};
-    Vec2 b3 = (Vec2) { size + offs, size + offs };
-    Vec2 c3 = (Vec2) { offs, size + offs };
-    Vec2 rotationCenter2 = b3;
-
-    Camera2D camera = {0};
+    Camera3D startingCamera = camera3D;
 
     while (window.IsWindowOpen()) {
         input.ProcessInput();
@@ -48,67 +44,43 @@ int GameMain(Platform* platform) {
             window.CloseCurrentWindow();
         }
 
-        MoveCamera(platform, &camera);
-
-        Vec2 vecMouse = GetMouseWorldCoordinates(platform, camera.origin);
-        float posX = vecMouse.x;
-        float posY = vecMouse.y;
-        Vec2 a = (Vec2) { posX, posY };
-        Vec2 b = (Vec2) { posX + size, posY };
-        Vec2 c = (Vec2) { posX, posY + size };
-
-        // CPU side transform
-        angle += angleStep;
-        Vec2 a2r = Vec2RotateAbout(a2, rotationCenter, angle);
-        Vec2 b2r = Vec2RotateAbout(b2, rotationCenter, angle);
-        Vec2 c2r = Vec2RotateAbout(c2, rotationCenter, angle);
+        UpdateCamera(input, &camera3D, startingCamera);
 
         render.ClearScreen(black);
 
-        render.DrawTriangle(a, b, c, red);
-        render.DrawTriangle(a2, b2, c2, green);
-        render.DrawTriangle(a2r, b2r, c2r, blue);
-        render.MakeDrawCall();
+        render.SetCamera3D(&camera3D);
+        render.DrawTriangle3D(aRef, bRef, cRef, green);
+        render.DrawTriangle3D(aRef2, bRef2, cRef2, blue);
 
-        // GPU side transform
-        Mat4 transform = Mat4RotateAbout2(rotationCenter2, angle);
-        render.SetTransform(transform);
-        render.DrawTriangle(a3, b3, c3, blue);
         render.MakeDrawCall();
-
         render.EndFrame();
     }
 
     return 0;
 }
 
-static Vec2 GetMouseWorldCoordinates(Platform* platform, Vec2 origin) {
-    int posX = platform->input.GetMouseInputX();
-    int posY = platform->input.GetMouseInputY();
-    int height = platform->window.GetClientHeight();
-
-    Vec2 vec = { posX + origin.x, height - posY + origin.y };
-    return vec;
-}
-
-static void MoveCamera(Platform* platform, Camera2D* camera) {
-    float originStep = 4;
-
-    if (platform->input.IsKeyDown(KeyRight)) {
-        camera->origin.x += originStep;
+static void UpdateCamera(Input input, Camera3D* camera3D, Camera3D startingCamera) {
+    float step = 5;
+    bool didUpdate = false;
+    if (input.IsKeyDown(KeyRight)) {
+        camera3D->position.x += step;
     }
-
-    if (platform->input.IsKeyDown(KeyLeft)) {
-        camera->origin.x -= originStep;
+    if (input.IsKeyDown(KeyLeft)) {
+        camera3D->position.x -= step;
     }
-
-    if (platform->input.IsKeyDown(KeyUp)) {
-        camera->origin.y += originStep;
+    if (input.IsKeyDown(KeyUp)) {
+        camera3D->position.y += step;
     }
-
-    if (platform->input.IsKeyDown(KeyDown)) {
-        camera->origin.y -= originStep;
+    if (input.IsKeyDown(KeyDown)) {
+        camera3D->position.y -= step;
     }
-
-    platform->render.SetCamera2D(camera);
+    if (input.IsKeyDown(KeyE)) {
+        camera3D->position.z += step;
+    }
+    if (input.IsKeyDown(KeyQ)) {
+        camera3D->position.z -= step;
+    }
+    if (input.IsKeyPressed(KeyR)) {
+        *camera3D = startingCamera;
+    }
 }

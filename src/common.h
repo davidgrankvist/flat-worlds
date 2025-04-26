@@ -36,6 +36,7 @@ typedef struct {
     float w;
 } Vec4;
 
+// row major 4x4 matrix
 typedef struct {
     float m[4][4];
 } Mat4;
@@ -86,5 +87,11 @@ typedef struct {
 typedef struct {
    Vec2 origin; // bottom left
 } Camera2D;
+
+typedef struct {
+    Vec3 position;
+    Vec3 target;
+    Vec3 up;
+} Camera3D;
 
 #endif
