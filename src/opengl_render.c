@@ -24,7 +24,7 @@ int currentVertexStart = 0; // start index for individual draw calls
 /*
  * The default shader program does following:
  * - apply a user defined transform (defaults to the identity matrix)
- * - apply a camera transform (which includes orthographic projection to NDC coordinates)
+ * - apply a camera transform (either 2D or 3D)
  * - pass through the given position and color
  */
 const char* defaultVertexShaderSrc = "#version 330 core\n"
@@ -127,6 +127,8 @@ void InitGraphicsGl(OpenGlExt ext) {
     openGlExt.glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, valuesPerVertex * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
     openGlExt.glEnableVertexAttribArray(1);
 
+    glEnable(GL_DEPTH_TEST);
+
     AssertNoGlError();
 }
 
@@ -190,14 +192,13 @@ void EndFrameGl() {
 
 void ClearScreenGl(Color color) {
     glClearColor(color.r, color.g, color.b, color.a);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
  }
 
 void DrawTriangle3DGl(Vec3 a, Vec3 b, Vec3 c, Color color) {
     int targetVertexCount = currentVertexCount + 3;
     Assert(targetVertexCount <= maxVertices, "Too many vertices (%d). Fix this by increasing the max vertices or by adding automatic resizing.", targetVertexCount);
 
-    // pass in as world coordinates and let the shader program convert to NDC
     GLfloat verticesToAdd[] = {
         a.x, a.y, a.z, color.r, color.g, color.b, color.a,
         b.x, b.y, b.z, color.r, color.g, color.b, color.a,

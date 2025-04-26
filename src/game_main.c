@@ -20,14 +20,34 @@ int GameMain(Platform* platform) {
     Color blue = (Color) { 0, 0, 1, 1 };
     Color purple = (Color) { 1, 0, 1, 1 };
 
-    // origin reference
     float refSize = 50;
+
+    /* In XY plane
+     *
+     *     c
+     *  a  b
+     */
     Vec3 aRef = { 0, 0, 0 };
     Vec3 bRef = { refSize, 0, 0.0f };
     Vec3 cRef = { refSize, refSize, 0.0f };
+
+    /* In XY plane
+     *
+     *  b  a
+     *  c
+     */
     Vec3 aRef2 = { 0, 0, 0 };
     Vec3 bRef2 = { -refSize, 0, 0.0f };
     Vec3 cRef2 = { -refSize, -refSize, 0.0f };
+
+    /* In XZ plane
+     *
+     * b  c
+     *    a
+     */
+    Vec3 aRef3 = { 0, 0, 0 };
+    Vec3 bRef3 = { -refSize, 0, refSize };
+    Vec3 cRef3 = { 0, 0, refSize };
 
     Camera3D camera3D = {0};
     camera3D.position = (Vec3) { 0, 0, -250 };
@@ -51,6 +71,7 @@ int GameMain(Platform* platform) {
         render.SetCamera3D(&camera3D);
         render.DrawTriangle3D(aRef, bRef, cRef, green);
         render.DrawTriangle3D(aRef2, bRef2, cRef2, blue);
+        render.DrawTriangle3D(aRef3, bRef3, cRef3, red);
 
         render.MakeDrawCall();
         render.EndFrame();
