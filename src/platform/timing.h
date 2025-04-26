@@ -6,7 +6,7 @@
 #ifndef timing_h
 #define timing_h
 
-#include "common.h"
+#include <stdint.h>
 
 typedef struct {
     int64_t (*GetMicroTicks)();

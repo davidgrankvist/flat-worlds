@@ -1,7 +1,6 @@
 #include <stdarg.h>
-#include "common.h"
-
-// -- Utils --
+#include <stdio.h>
+#include "asserts.h"
 
 void Assert(bool b, const char* format, ...) {
     if (!b) {

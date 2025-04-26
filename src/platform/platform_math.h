@@ -1,7 +1,7 @@
-#ifndef mathz_h
-#define mathz_h
+#ifndef platform_math_h
+#define platform_math_h
 
-#include "common.h"
+#include "platform.h"
 
 // All angles are in radians and counterclockwise.
 

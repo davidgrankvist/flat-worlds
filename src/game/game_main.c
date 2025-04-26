@@ -1,5 +1,4 @@
-#include "game_main.h"
-#include "mathz.h"
+#include "platform.h"
 
 static void UpdateCamera(Input input, Camera3D* camera, Camera3D startingCamera);
 

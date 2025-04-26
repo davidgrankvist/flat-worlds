@@ -1,6 +1,8 @@
+#include <stdlib.h>
 #include "opengl_render.h"
-#include "mathz.h"
+#include "platform_math.h"
 #include "camera.h"
+#include "asserts.h"
 
 // provided by platform layer
 OpenGlExt openGlExt;

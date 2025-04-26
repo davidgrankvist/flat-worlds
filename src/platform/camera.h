@@ -6,7 +6,7 @@
 #ifndef camera_h
 #define camera_h
 
-#include "common.h"
+#include "platform.h"
 
 void SetCameraClientArea(int clientWidth, int clientHeight);
 void SetCameraTransform2D(Camera2D* camera);

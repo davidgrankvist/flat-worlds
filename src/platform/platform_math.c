@@ -1,5 +1,5 @@
 #include <math.h>
-#include "mathz.h"
+#include "platform_math.h"
 
 static Vec4 Vec2ToVec4(Vec2 vec);
 static Vec3 Vec2ToVec3(Vec2 vec);

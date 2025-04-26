@@ -1,4 +1,5 @@
 #include "timing.h"
+#include "asserts.h"
 
 PlatformTiming timing = {};
 static int64_t usPerSecond = 1000000;

@@ -16,12 +16,15 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <timeapi.h>
+#include <stdio.h>
 #include "input.h"
 #include "opengl_render.h"
 #include "timing.h"
-#include "game_main.h"
+#include "asserts.h"
 
 #include <gl/wglext.h>
+
+#include "platform.h"
 
 void InitWindow();
 bool IsWindowOpen();

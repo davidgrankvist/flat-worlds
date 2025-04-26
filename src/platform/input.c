@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include "input.h"
 
 // helpers to toggle 1-bit key/button states
