@@ -74,13 +74,14 @@ static void UpdateCamera(Input input, Camera3D* camera3D, Camera3D startingCamer
     if (input.IsKeyDown(KeyDown)) {
         camera3D->position.y -= step;
     }
-    if (input.IsKeyDown(KeyE)) {
+    if (input.IsKeyDown(KeyW)) {
         camera3D->position.z += step;
     }
-    if (input.IsKeyDown(KeyQ)) {
+    if (input.IsKeyDown(KeyS)) {
         camera3D->position.z -= step;
     }
     if (input.IsKeyPressed(KeyR)) {
         *camera3D = startingCamera;
     }
+
 }

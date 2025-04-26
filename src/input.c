@@ -1,7 +1,7 @@
 #include "input.h"
 
 // helpers to toggle 1-bit key/button states
-#define KEY_TO_BIT(k) (1 << k)
+#define KEY_TO_BIT(k) (1ULL << k)
 #define IS_KEY_SET(k, input) (input & KEY_TO_BIT(k))
 
 // current / previous key states are set with single bits (1 means down)
