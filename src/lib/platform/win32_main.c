@@ -24,7 +24,7 @@
 
 #include <gl/wglext.h>
 
-#include "platform.h"
+#include "libgame.h"
 
 void InitWindow();
 bool IsWindowOpen();

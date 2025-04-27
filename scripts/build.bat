@@ -2,12 +2,13 @@
 
 mkdir bin > NUL 2>&1
 
-cl src\platform\*.c src\game\*.c ^
+cl src\lib\platform\win32_main.c src\lib\common\*.c src\game\*.c ^
     /Fe: bin\game.exe ^
     /Fo: bin\ ^
     /Fd: bin\ ^
     /Zi ^
-    /I"src\platform" ^
+    /I"src\lib\include" ^
+    /I"src\lib\common" ^
     /I"src\game" ^
     /I"vendor\include" ^
     /link ^

@@ -8,7 +8,7 @@
 #ifndef input_h
 #define input_h
 
-#include "platform.h"
+#include "libgame.h"
 
 // helpers to set up input state from the platform-specific code
 void UpdateInputBuffers(); // call at beginning of ProcessInput

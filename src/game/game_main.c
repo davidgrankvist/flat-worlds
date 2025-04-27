@@ -1,4 +1,4 @@
-#include "platform.h"
+#include "libgame.h"
 
 static void UpdateCamera(Input input, Camera3D* camera, Camera3D startingCamera);
 

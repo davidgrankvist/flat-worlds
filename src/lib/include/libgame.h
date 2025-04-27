@@ -1,16 +1,18 @@
 /*
- * This header defines the platform API and game entrypoint.
+ * Public header - core.
  *
+ * The Platform struct is a container for platform specific functions.
  * The platform specific "actual main" sets up the function pointers
- * and passes them into GameMain where the game code runs.
+ * in the Platform struct and passes them into GameMain where the game code runs.
  */
 
-#ifndef platform_h
-#define platform_h
+#ifndef libgame_h
+#define libgame_h
 
 #include <stdbool.h>
 
 // -- Math --
+// Just the types here. See libgame_math.h for math functions.
 
 typedef struct {
     float x;

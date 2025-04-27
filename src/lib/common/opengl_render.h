@@ -19,7 +19,7 @@
 #define GL_GLEXT_PROTOTYPES
 #include <gl/glext.h>
 
-#include "platform.h"
+#include "libgame.h"
 
 // OpenGL extensions that are dynamically loaded by the platform layer (assumes version 3.3)
 typedef struct {

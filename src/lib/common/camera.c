@@ -1,5 +1,5 @@
 #include "camera.h"
-#include "platform_math.h"
+#include "libgame_math.h"
 
 static int clientWidth = 0;
 static int clientHeight = 0;

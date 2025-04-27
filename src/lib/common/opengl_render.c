@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include "opengl_render.h"
-#include "platform_math.h"
+#include "libgame_math.h"
 #include "camera.h"
 #include "asserts.h"
 

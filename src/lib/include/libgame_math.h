@@ -1,7 +1,11 @@
-#ifndef platform_math_h
-#define platform_math_h
+/*
+ * Public header - math.
+ */
 
-#include "platform.h"
+#ifndef libgame_math_h
+#define libgame_math_h
+
+#include "libgame.h"
 
 // All angles are in radians and counterclockwise.
 
