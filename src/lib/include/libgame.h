@@ -18,6 +18,7 @@
 #define libgame_h
 
 #include <stdbool.h>
+#include <stdint.h>
 
 // -- Math --
 // Just the types here. See libgame_math.h for math functions.
@@ -154,12 +155,16 @@ typedef struct {
 
 // -- Timing --
 
+#define TICKS_PER_SECOND 1000000
+#define TICKS_TO_SECONDS(t) ((float)(t) / (float)(TICKS_PER_SECOND))
+
 typedef struct {
     void (*SetTargetFps)(int fps);
     int (*GetFps)();
     void (*SleepUntilNextFrame)();
     void (*Reset)();
-} FrameTimer;
+    uint64_t (*GetTicks)(); // microseconds
+} Timer;
 
 // -- Platform API combined struct --
 
@@ -167,7 +172,7 @@ typedef struct {
     Window window;
     Input input;
     Render render;
-    FrameTimer timer;
+    Timer timer;
 } Platform;
 
 // -- Set up platform specifics --

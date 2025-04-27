@@ -47,6 +47,7 @@ void EndFrame();
 void SetResolutionGl(int width, int height);
 void MakeDrawCallGl();
 static void InitTiming();
+static inline int64_t GetMicroTicks();
 
 // -- State --
 
@@ -101,11 +102,12 @@ Platform InitPlatformWin32() {
     platform.render = render;
 
     InitTiming();
-    FrameTimer timer = {};
+    Timer timer = {};
     timer.SetTargetFps = SetTargetFps;
     timer.GetFps = GetFps;
     timer.SleepUntilNextFrame = SleepUntilNextFrame;
     timer.Reset = ResetTimer;
+    timer.GetTicks = GetMicroTicks;
     platform.timer = timer;
 
     return platform;
@@ -414,9 +416,8 @@ void EndFrame() {
 
 static int64_t usPerSecond = 1000000;
 static int64_t usPerMs = 1000;
-static int64_t usPerTick = 0;
+static int64_t usPerTick = 0; // Dummy value. This is set in InitTiming.
 
-static inline int64_t GetMicroTicks();
 static void MicroSleep(int us);
 
 static void InitTiming() {

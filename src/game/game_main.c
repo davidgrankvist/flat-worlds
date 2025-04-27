@@ -1,6 +1,6 @@
 #include "libgame.h"
 
-static void UpdateCamera(Input input, Camera3D* camera, Camera3D startingCamera);
+static void UpdateCamera(float deltaTime, Input input, Camera3D* camera, Camera3D startingCamera);
 
 int main(int argc, char** argv) {
     Platform* platform = GetPlatform();
@@ -8,7 +8,7 @@ int main(int argc, char** argv) {
     Window window = platform->window;
     Input input = platform->input;
     Render render = platform->render;
-    FrameTimer timer = platform->timer;
+    Timer timer = platform->timer;
 
     window.InitWindow();
 
@@ -57,6 +57,7 @@ int main(int argc, char** argv) {
 
     Camera3D startingCamera = camera3D;
 
+    uint64_t ticks = timer.GetTicks();
     while (window.IsWindowOpen()) {
         input.ProcessInput();
         timer.SleepUntilNextFrame();
@@ -65,7 +66,10 @@ int main(int argc, char** argv) {
             window.CloseCurrentWindow();
         }
 
-        UpdateCamera(input, &camera3D, startingCamera);
+        uint64_t ellapsed = timer.GetTicks() - ticks;
+        float deltaTime = TICKS_TO_SECONDS(ellapsed);
+
+        UpdateCamera(deltaTime, input, &camera3D, startingCamera);
 
         render.ClearScreen(black);
 
@@ -76,14 +80,17 @@ int main(int argc, char** argv) {
 
         render.MakeDrawCall();
         render.EndFrame();
+
+        ticks = timer.GetTicks();
     }
 
     return 0;
 }
 
-static void UpdateCamera(Input input, Camera3D* camera3D, Camera3D startingCamera) {
-    float step = 5;
-    bool didUpdate = false;
+static void UpdateCamera(float deltaTime, Input input, Camera3D* camera3D, Camera3D startingCamera) {
+    float speed = 400;
+    float step = speed * deltaTime;
+
     if (input.IsKeyDown(KeyRight)) {
         camera3D->position.x += step;
     }
