@@ -16,6 +16,9 @@ you can structure the code like this:
 This way the platform owns the real entrypoint, but the game code is still able to call
 platform APIs.
 
+Instead of having a custom named GameMain, it is possible to define a "fake main" that makes it appear
+as the game code is using the regular main. Under the hood, the WinMain can then invoke this main.
+
 ### Input
 
 When you press a key, it will be reported to the OS using a platform-specific virtual key code.

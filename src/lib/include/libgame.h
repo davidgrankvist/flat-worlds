@@ -5,12 +5,12 @@
  * managing inputs and rendering.
  *
  * The Platform struct is a container for function pointers to those utilities.
- * The platform specific "actual main" sets up the function pointers and passes them into a GameMain.
  *
  * In the game code, define the game entrypoint like this:
  *
- * LIBGAME_EXPORT int GameMain(Platform* platform) {
- *    // game logic
+ * int main(int argc, char** argv) {
+ *      Platform* platform = GetPlatform();
+ *      // game logic
  * }
  */
 
@@ -18,7 +18,6 @@
 #define libgame_h
 
 #include <stdbool.h>
-#include "libgame_platform.h"
 
 // -- Math --
 // Just the types here. See libgame_math.h for math functions.
@@ -170,5 +169,11 @@ typedef struct {
     Render render;
     FrameTimer timer;
 } Platform;
+
+// -- Set up platform specifics --
+
+#include "libgame_platform.h"
+
+LIBGAME_EXPORT Platform* GetPlatform();
 
 #endif

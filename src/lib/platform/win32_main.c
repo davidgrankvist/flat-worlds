@@ -1,12 +1,18 @@
 /*
- * This is the win32 entrypoint. It sets up win32 specific functions and passes them as function pointers to GameMain where the game code runs.
+ * This file defines the win32 platform specifics. It sets up function pointers
+ * for the Platform struct that's used in the game code.
  *
  * This file handles:
  * - window creation
- * - processing input and mapping key codes
+ * - mapping key codes
  * - rendering backend initialization and swapping buffers
  *
- * The actual input buffering and rendering backend are defined in shared headers that are not specific to win32.
+ * It provides:
+ * - InitMainWin32 to set things up when WinMain is run
+ * - GetPlatform to allow the game code to retrieve the platform API struct
+ *
+ * The actual WinMain is defined in libgame_platform.h and is only included when the game
+ * executable is built.
  */
 
 #ifndef UNICODE
@@ -53,22 +59,13 @@ HDC windowHdc;
 static int clientWidth = 0;
 static int clientHeight = 0;
 
-// game entrypoint in external code
-typedef int (*GameMainFunc)(Platform* platform);
-static GameMainFunc gameMain = NULL;
+Platform win32Platform = {};
 
-// platform specific entrypoint
-int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-        PWSTR pCmdLine, int nCmdShow) {
-    if (getenv("DEBUG_CONSOLE")) {
-        InitConsole();
-    }
-    Assert(KeyUnknown <= 64, "Too many key codes to fit in a u64. Please update the input data structure.");
-    Assert(MouseUnknown <= 8, "Too many mouse key codes to fit in a u8. Please update the input data structure.");
+Platform* GetPlatform() {
+    return &win32Platform;
+}
 
-    windowHInstance = hInstance;
-    windowNCmdShow = nCmdShow;
-
+Platform InitPlatformWin32() {
     Platform platform = {};
 
     Window window = {};
@@ -111,12 +108,21 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     timer.Reset = ResetTimer;
     platform.timer = timer;
 
-    // load GameMain from the game code
-    HMODULE gameMainModule = GetModuleHandle(NULL);
-    gameMain = (GameMainFunc)GetProcAddress(gameMainModule, "GameMain");
-    Assert(gameMain != NULL, "Failed to load GameMain");
+    return platform;
+}
 
-    return gameMain(&platform);
+// platform specific entrypoint
+void InitMainWin32() {
+    if (getenv("DEBUG_CONSOLE")) {
+        InitConsole();
+    }
+    Assert(KeyUnknown <= 64, "Too many key codes to fit in a u64. Please update the input data structure.");
+    Assert(MouseUnknown <= 8, "Too many mouse key codes to fit in a u8. Please update the input data structure.");
+
+    windowHInstance = GetModuleHandle(NULL);
+    windowNCmdShow = SW_SHOWDEFAULT;
+
+    win32Platform = InitPlatformWin32();
 }
 
 // -- Window --
