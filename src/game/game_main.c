@@ -2,7 +2,7 @@
 
 static void UpdateCamera(Input input, Camera3D* camera, Camera3D startingCamera);
 
-int GameMain(Platform* platform) {
+LIBGAME_EXPORT int GameMain(Platform* platform) {
     Window window = platform->window;
     Input input = platform->input;
     Render render = platform->render;

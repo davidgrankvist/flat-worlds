@@ -13,18 +13,20 @@
 #define UNICODE
 #endif
 
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
+#include "platform_include.h"
+
 #include <timeapi.h>
 #include <stdio.h>
-#include "input.h"
-#include "opengl_render.h"
-#include "timing.h"
-#include "asserts.h"
 
+#include "opengl_render.h"
 #include <gl/wglext.h>
 
 #include "libgame.h"
+#include "input.h"
+#include "timing.h"
+#include "asserts.h"
+
+// -- Forward declarations --
 
 void InitWindow();
 bool IsWindowOpen();
@@ -40,6 +42,8 @@ void SetResolutionGl(int width, int height);
 void MakeDrawCallGl();
 static void InitTiming();
 
+// -- State --
+
 HINSTANCE windowHInstance;
 int windowNCmdShow;
 MSG msg = {};
@@ -49,23 +53,11 @@ HDC windowHdc;
 static int clientWidth = 0;
 static int clientHeight = 0;
 
-typedef struct {
-    PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB;
-} WglExt;
-WglExt wglExt = {};
+// game entrypoint in external code
+typedef int (*GameMainFunc)(Platform* platform);
+static GameMainFunc gameMain = NULL;
 
-#define LOAD_OPENGL_EXTENSION_INTO(name, type, target) \
-    do { \
-        target = (type)wglGetProcAddress(#name); \
-        Assert(target != NULL, "Unable to load OpenGL extension %s", #name); \
-    } while(false)
-
-#define LOAD_OPENGL_EXTENSION(name, type) LOAD_OPENGL_EXTENSION_INTO(name, type, openGlExt->name)
-#define LOAD_WGL_EXTENSION(name, type) LOAD_OPENGL_EXTENSION_INTO(name, type, wglExt.name)
-
-#define EXTRACT_LOW16(n) (n & 0x0000FFFF);
-#define EXTRACT_HIGH16(n) (n >> 16)
-
+// platform specific entrypoint
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         PWSTR pCmdLine, int nCmdShow) {
     if (getenv("DEBUG_CONSOLE")) {
@@ -119,7 +111,12 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     timer.Reset = ResetTimer;
     platform.timer = timer;
 
-    return GameMain(&platform);
+    // load GameMain from the game code
+    HMODULE gameMainModule = GetModuleHandle(NULL);
+    gameMain = (GameMainFunc)GetProcAddress(gameMainModule, "GameMain");
+    Assert(gameMain != NULL, "Failed to load GameMain");
+
+    return gameMain(&platform);
 }
 
 // -- Window --
@@ -164,6 +161,10 @@ void MapAndSetResolution(LPARAM lParam);
 InputKey MapKeyCode(WPARAM wParam, LPARAM lParam);
 void MapAndSetMousePosition(LPARAM lParam);
 
+// for reading lParam things
+#define EXTRACT_LOW16(n) (n & 0x0000FFFF);
+#define EXTRACT_HIGH16(n) (n >> 16)
+
 LRESULT CALLBACK WindProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     switch(uMsg) {
         case WM_DESTROY:
@@ -207,6 +208,20 @@ LRESULT CALLBACK WindProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     }
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
+
+typedef struct {
+    PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB;
+} WglExt;
+WglExt wglExt = {};
+
+#define LOAD_OPENGL_EXTENSION_INTO(name, type, target) \
+    do { \
+        target = (type)wglGetProcAddress(#name); \
+        Assert(target != NULL, "Unable to load OpenGL extension %s", #name); \
+    } while(false)
+
+#define LOAD_OPENGL_EXTENSION(name, type) LOAD_OPENGL_EXTENSION_INTO(name, type, openGlExt->name)
+#define LOAD_WGL_EXTENSION(name, type) LOAD_OPENGL_EXTENSION_INTO(name, type, wglExt.name)
 
 static void LoadOpenGlExtensions(OpenGlExt* openGlExt) {
     LOAD_OPENGL_EXTENSION(glBindBuffer, PFNGLBINDBUFFERPROC);

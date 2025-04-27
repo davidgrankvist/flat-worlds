@@ -1,5 +1,5 @@
 /*
- * This is the OpenGL rendering backend. It relies on version 3.3.0.
+ * This is the OpenGL rendering backend.
  *
  * The basic idea is to provide utilities like DrawTriangle and then
  * internally keep track of buffering and batching draw calls.
@@ -8,44 +8,51 @@
 #ifndef opengl_render_h
 #define opengl_render_h
 
-// make sure windows.h is always included before OpenGL
-#ifdef _WIN32
-    #define WIN32_LEAN_AND_MEAN
-    #include <windows.h>
-#endif
-#include <gl/gl.h>
+#include "platform_include.h"
 
-#define GL_VERSION_3_3 1
-#define GL_GLEXT_PROTOTYPES
-#include <gl/glext.h>
+// -- Version specific definitions --
+
+#ifdef LIBGAME_OPENGL_RENDER_330
+    #include <gl/gl.h>
+
+    // set up glext.h
+    #define GL_VERSION_3_3 1
+    #define GL_GLEXT_PROTOTYPES
+
+    #include <gl/glext.h>
+
+    // OpenGL extensions that are dynamically loaded by the platform layer (assumes 3.3.0)
+    typedef struct {
+        PFNGLBINDBUFFERPROC glBindBuffer;
+        PFNGLGENBUFFERSPROC glGenBuffers;
+        PFNGLBUFFERDATAPROC glBufferData;
+        PFNGLATTACHSHADERPROC glAttachShader;
+        PFNGLCOMPILESHADERPROC glCompileShader;
+        PFNGLCREATEPROGRAMPROC glCreateProgram;
+        PFNGLCREATESHADERPROC glCreateShader;
+        PFNGLDELETESHADERPROC glDeleteShader;
+        PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray;
+        PFNGLLINKPROGRAMPROC glLinkProgram;
+        PFNGLSHADERSOURCEPROC glShaderSource;
+        PFNGLUSEPROGRAMPROC glUseProgram;
+        PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer;
+        PFNGLBINDVERTEXARRAYPROC glBindVertexArray;
+        PFNGLGENVERTEXARRAYSPROC glGenVertexArrays;
+        PFNGLGETSHADERIVPROC glGetShaderiv;
+        PFNGLGETSHADERINFOLOGPROC glGetShaderInfoLog;
+        PFNGLGETPROGRAMIVPROC glGetProgramiv;
+        PFNGLGETPROGRAMINFOLOGPROC glGetProgramInfoLog;
+        PFNGLBUFFERSUBDATAPROC glBufferSubData;
+        PFNGLGETUNIFORMLOCATIONPROC glGetUniformLocation;
+        PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv;
+    } OpenGlExt;
+#else
+    #error "No supported OpenGL version was enabled."
+#endif
+
+// -- Utilities for the platform code --
 
 #include "libgame.h"
-
-// OpenGL extensions that are dynamically loaded by the platform layer (assumes version 3.3)
-typedef struct {
-    PFNGLBINDBUFFERPROC glBindBuffer;
-    PFNGLGENBUFFERSPROC glGenBuffers;
-    PFNGLBUFFERDATAPROC glBufferData;
-    PFNGLATTACHSHADERPROC glAttachShader;
-    PFNGLCOMPILESHADERPROC glCompileShader;
-    PFNGLCREATEPROGRAMPROC glCreateProgram;
-    PFNGLCREATESHADERPROC glCreateShader;
-    PFNGLDELETESHADERPROC glDeleteShader;
-    PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray;
-    PFNGLLINKPROGRAMPROC glLinkProgram;
-    PFNGLSHADERSOURCEPROC glShaderSource;
-    PFNGLUSEPROGRAMPROC glUseProgram;
-    PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer;
-    PFNGLBINDVERTEXARRAYPROC glBindVertexArray;
-    PFNGLGENVERTEXARRAYSPROC glGenVertexArrays;
-    PFNGLGETSHADERIVPROC glGetShaderiv;
-    PFNGLGETSHADERINFOLOGPROC glGetShaderInfoLog;
-    PFNGLGETPROGRAMIVPROC glGetProgramiv;
-    PFNGLGETPROGRAMINFOLOGPROC glGetProgramInfoLog;
-    PFNGLBUFFERSUBDATAPROC glBufferSubData;
-    PFNGLGETUNIFORMLOCATIONPROC glGetUniformLocation;
-    PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv;
-} OpenGlExt;
 
 // internal utilities for platform code
 void InitGraphicsGl(OpenGlExt openglExt); // call at window creation
