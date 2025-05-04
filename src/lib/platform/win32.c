@@ -1,18 +1,8 @@
 /*
- * This file defines the win32 platform specifics. It sets up function pointers
+ * This file is the library entrypoint when targeting win32. It sets up function pointers
  * for the Platform struct that's used in the game code.
  *
- * This file handles:
- * - window creation
- * - mapping key codes
- * - rendering backend initialization and swapping buffers
- *
- * It provides:
- * - InitMainWin32 to set things up when WinMain is run
- * - GetPlatform to allow the game code to retrieve the platform API struct
- *
- * The actual WinMain is defined in libgame_platform.h and is only included when the game
- * executable is built.
+ * The WinMain is defined in libgame_platform_main.h and is not included in the library build.
  */
 
 #ifndef UNICODE
@@ -32,20 +22,34 @@
 #include "timing.h"
 #include "asserts.h"
 
-// -- Forward declarations --
+// -- Forward declarations (public API) --
 
-void InitWindow();
-bool IsWindowOpen();
-void CloseCurrentWindow();
-int GetClientWidth();
-int GetClientHeight();
-void InitConsole();
-void ProcessInput();
-void SetTransform(Mat4 mat);
-void EndFrame();
+/*
+ * Used in WinMain to set up platform function pointers.
+ */
+void InitMainWin32();
 
-void SetResolutionGl(int width, int height);
-void MakeDrawCallGl();
+/*
+ * Used by the game code to access the platform API
+ * after the function pointers have been set up.
+ */
+Platform* GetPlatform();
+
+// -- Forward declarations (internal) --
+
+static Platform InitPlatformWin32();
+
+static void InitWindow();
+static bool IsWindowOpen();
+static void CloseCurrentWindow();
+static int GetClientWidth();
+static int GetClientHeight();
+static void InitConsole();
+static void ProcessInput();
+static void SetTransform(Mat4 mat);
+static void EndFrame();
+
+static void MakeDrawCallGl();
 static void InitTiming();
 static inline int64_t GetMicroTicks();
 static bool LoadLibraryInternal(char* name, DynamicLibrary* lib);
@@ -68,7 +72,20 @@ Platform* GetPlatform() {
     return &win32Platform;
 }
 
-Platform InitPlatformWin32() {
+void InitMainWin32() {
+    if (getenv("DEBUG_CONSOLE")) {
+        InitConsole();
+    }
+    Assert(KeyUnknown <= 64, "Too many key codes to fit in a u64. Please update the input data structure.");
+    Assert(MouseUnknown <= 8, "Too many mouse key codes to fit in a u8. Please update the input data structure.");
+
+    windowHInstance = GetModuleHandle(NULL);
+    windowNCmdShow = SW_SHOWDEFAULT;
+
+    win32Platform = InitPlatformWin32();
+}
+
+static Platform InitPlatformWin32() {
     Platform platform = {};
 
     Window window = {};
@@ -120,26 +137,12 @@ Platform InitPlatformWin32() {
     return platform;
 }
 
-// platform specific entrypoint
-void InitMainWin32() {
-    if (getenv("DEBUG_CONSOLE")) {
-        InitConsole();
-    }
-    Assert(KeyUnknown <= 64, "Too many key codes to fit in a u64. Please update the input data structure.");
-    Assert(MouseUnknown <= 8, "Too many mouse key codes to fit in a u8. Please update the input data structure.");
-
-    windowHInstance = GetModuleHandle(NULL);
-    windowNCmdShow = SW_SHOWDEFAULT;
-
-    win32Platform = InitPlatformWin32();
-}
-
 // -- Window --
 
 LRESULT CALLBACK WindProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 HGLRC InitOpenGl(HDC windowHdc);
 
-void InitWindow() {
+static void InitWindow() {
     const wchar_t className[] = L"WindowClassName";
     WNDCLASS wc = {};
     wc.lpfnWndProc = WindProc;
@@ -164,11 +167,11 @@ void InitWindow() {
     ShowWindow(hwnd, windowNCmdShow);
 }
 
-bool IsWindowOpen() {
+static bool IsWindowOpen() {
     return shouldRun;
 }
 
-void CloseCurrentWindow() {
+static void CloseCurrentWindow() {
     shouldRun = false;
 }
 
@@ -180,7 +183,7 @@ void MapAndSetMousePosition(LPARAM lParam);
 #define EXTRACT_LOW16(n) (n & 0x0000FFFF);
 #define EXTRACT_HIGH16(n) (n >> 16)
 
-LRESULT CALLBACK WindProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+static LRESULT CALLBACK WindProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     switch(uMsg) {
         case WM_DESTROY:
             PostQuitMessage(0);
@@ -267,7 +270,7 @@ static void LoadWglExtensions() {
     LOAD_WGL_EXTENSION(wglCreateContextAttribsARB, PFNWGLCREATECONTEXTATTRIBSARBPROC);
 }
 
-HGLRC InitOpenGl(HDC windowHdc) {
+static HGLRC InitOpenGl(HDC windowHdc) {
     PIXELFORMATDESCRIPTOR pfd = {};
     pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
     pfd.nVersion = 1;
@@ -316,11 +319,11 @@ static void MapAndSetResolution(LPARAM lParam) {
     SetResolutionGl(clientWidth, clientHeight);
 }
 
-int GetClientWidth() {
+static int GetClientWidth() {
     return clientWidth;
 }
 
-int GetClientHeight() {
+static int GetClientHeight() {
     return clientHeight;
 }
 
@@ -337,7 +340,7 @@ void InitConsole() {
 
 // -- Input --
 
-void ProcessInput() {
+static void ProcessInput() {
     UpdateInputBuffers();
 
     while(PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
@@ -361,7 +364,7 @@ static InputKey MapKeyCodeInRange(WPARAM vk, WPARAM vkStart, InputKey keyStart) 
 }
 
 // see https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
-InputKey MapKeyCode(WPARAM wParam, LPARAM lParam) {
+static InputKey MapKeyCode(WPARAM wParam, LPARAM lParam) {
     int vk = wParam;
     int scanCode = EXTRACT_HIGH16(lParam) & 0xFF;
 
@@ -401,7 +404,7 @@ InputKey MapKeyCode(WPARAM wParam, LPARAM lParam) {
 }
 
 // see https://learn.microsoft.com/en-us/windows/win32/inputdev/wm-mousemove
-void MapAndSetMousePosition(LPARAM lParam) {
+static void MapAndSetMousePosition(LPARAM lParam) {
     int x = EXTRACT_LOW16(lParam);
     int y = EXTRACT_HIGH16(lParam);
 
@@ -410,11 +413,11 @@ void MapAndSetMousePosition(LPARAM lParam) {
 
 // -- Render --
 
-void MakeDrawCallGl() {
+static void MakeDrawCallGl() {
     EndDrawGl();
 }
 
-void EndFrame() {
+static void EndFrame() {
     EndFrameGl();
     SwapBuffers(windowHdc);
 }

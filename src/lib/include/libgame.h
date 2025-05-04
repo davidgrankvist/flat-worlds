@@ -5,13 +5,6 @@
  * managing inputs and rendering.
  *
  * The Platform struct is a container for function pointers to those utilities.
- *
- * In the game code, define the game entrypoint like this:
- *
- * int main(int argc, char** argv) {
- *      Platform* platform = GetPlatform();
- *      // game logic
- * }
  */
 
 #ifndef libgame_h
