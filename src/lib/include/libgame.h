@@ -168,13 +168,21 @@ typedef struct {
     uint64_t lastWrite;
 } DynamicLibrary;
 
+typedef enum {
+    LibraryExtension,
+} FileExtensionType;
+
 typedef struct {
     /*
-     * Load or reload a library if it has changed. Returns true if a loading or reload was done.
-     *
-     * Files are copied to avoid file locks.
+     * Takes a path relative to the executable and resolves it to an absolute path.
+     * The file extension should be omitted from the string and set via the FileExtensionType instead.
      */
-    bool (*LoadLibrary)(char* libraryName, DynamicLibrary* lib);
+    void (*ResolvePath)(char* fileBaseName, FileExtensionType extension, char* out, int outSize);
+    /*
+     * Load or reload a library if it has changed. Returns true if a loading or reload was done.
+     * Resolve to an absolute path before calling this.
+     */
+    bool (*LoadDynamicLibrary)(char* libraryPath, DynamicLibrary* lib);
     void* (*LoadLibraryFunction)(char* functionName, DynamicLibrary* lib);
 } LibraryLoader;
 

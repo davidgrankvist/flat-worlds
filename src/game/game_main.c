@@ -1,6 +1,6 @@
 #include "libgame.h"
 #include "libgame_platform_main.h"
-#include "game_update.h"
+#include "game_state.h"
 
 static GameState InitGameState();
 
@@ -9,8 +9,17 @@ int main(int argc, char** argv) {
     Window window = platform->window;
     Input input = platform->input;
     Timer timer = platform->timer;
+    LibraryLoader libLoader = platform->libLoader;
 
     GameState gameState = InitGameState();
+
+    DynamicLibrary gameUpdateLib = {0};
+    GameUpdateFunc gameUpdateFn;
+
+    char gameUpdatePath[256];
+    libLoader.ResolvePath("game_update", LibraryExtension, gameUpdatePath, sizeof(gameUpdatePath));
+    libLoader.LoadDynamicLibrary(gameUpdatePath, &gameUpdateLib);
+    gameUpdateFn = (GameUpdateFunc)libLoader.LoadLibraryFunction("GameUpdate", &gameUpdateLib);
 
     window.InitWindow();
 
@@ -19,6 +28,11 @@ int main(int argc, char** argv) {
     uint64_t ticks = timer.GetTicks();
 
     while (window.IsWindowOpen()) {
+        bool didUpdate = libLoader.LoadDynamicLibrary(gameUpdatePath, &gameUpdateLib);
+        if (didUpdate) {
+            gameUpdateFn = (GameUpdateFunc)libLoader.LoadLibraryFunction("GameUpdate", &gameUpdateLib);
+        }
+
         input.ProcessInput();
         timer.SleepUntilNextFrame();
 
@@ -29,7 +43,7 @@ int main(int argc, char** argv) {
         uint64_t ellapsed = timer.GetTicks() - ticks;
         float deltaTime = TICKS_TO_SECONDS(ellapsed);
 
-        GameUpdate(deltaTime, &gameState, platform);
+        gameUpdateFn(deltaTime, &gameState, platform);
 
         ticks = timer.GetTicks();
     }

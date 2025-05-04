@@ -2,7 +2,9 @@
 
 mkdir bin > NUL 2>&1
 
-cl src\game\*.c ^
+call .\scripts\build_game_update.bat
+
+cl src\game\game_main.c ^
     /Fe: bin\game.exe ^
     /Fo: bin\ ^
     /Fd: bin\ ^

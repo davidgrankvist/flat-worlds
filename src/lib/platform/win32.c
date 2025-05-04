@@ -52,6 +52,7 @@ static void EndFrame();
 static void MakeDrawCallGl();
 static void InitTiming();
 static inline int64_t GetMicroTicks();
+static void ResolvePath(char* name, FileExtensionType extension, char* out, int outSize);
 static bool LoadLibraryInternal(char* name, DynamicLibrary* lib);
 static void* LoadLibraryFunction(char* name, DynamicLibrary* lib);
 
@@ -130,7 +131,8 @@ static Platform InitPlatformWin32() {
     platform.timer = timer;
 
     LibraryLoader libLoader = {};
-    libLoader.LoadLibrary = LoadLibraryInternal;
+    libLoader.ResolvePath = ResolvePath;
+    libLoader.LoadDynamicLibrary = LoadLibraryInternal;
     libLoader.LoadLibraryFunction = LoadLibraryFunction;
     platform.libLoader = libLoader;
 
@@ -482,13 +484,36 @@ static void MicroSleep(int us) {
 
 // -- Dynamic loading --
 
-static char tempName[256];
+static const char* GetFileExtension(FileExtensionType extension) {
+    switch(extension) {
+        case LibraryExtension: return ".dll";
+        default: AssertFail("Unsupported file extension %d", extension);
+    }
 
-static uint64_t LastFileWrite(char* name) {
+    return NULL;
+}
+
+static void ResolvePath(char* name, FileExtensionType extension, char* out, int outSize) {
+    const char* ext = GetFileExtension(extension);
+
+    char exePath[MAX_PATH];
+    GetModuleFileNameA(NULL, exePath, sizeof(exePath));
+
+    char* lastSlash = strrchr(exePath, '\\');
+    *(lastSlash + 1) = '\0';
+
+    strcat(exePath, name);
+    strcat(exePath, ext);
+    strncpy(out, exePath, outSize);
+}
+
+static uint64_t LastFileWrite(char* path) {
     WIN32_FIND_DATAA findData = {};
-    HANDLE fileHandle = FindFirstFileA(name, &findData);
+    HANDLE fileHandle = FindFirstFileA(path, &findData);
 
-    Assert(fileHandle != INVALID_HANDLE_VALUE, "Invalid file handle when checking last write time of %s", name);
+    if (fileHandle == INVALID_HANDLE_VALUE) {
+        return 0; // assume that it's locked and signal with a dummy timestamp
+    }
 
     FILETIME lastWriteFt = findData.ftLastWriteTime;
     ULARGE_INTEGER ull;
@@ -499,30 +524,73 @@ static uint64_t LastFileWrite(char* name) {
     return lastWrite;
 }
 
-static bool LoadLibraryInternal(char* name, DynamicLibrary* lib) {
+static bool IsFileLocked(char* path) {
+    HANDLE hFile = CreateFileA(
+        path,
+        GENERIC_READ,
+        0,
+        NULL,
+        OPEN_EXISTING,
+        FILE_ATTRIBUTE_NORMAL,
+        NULL
+    );
+
+    if (hFile == INVALID_HANDLE_VALUE) {
+        return true; // assume that it's locked
+    }
+
+    OVERLAPPED overlapped = { 0 };
+    if (LockFileEx(hFile, LOCKFILE_EXCLUSIVE_LOCK, 0, 0, 0, &overlapped)) {
+        CloseHandle(hFile);
+        return false;
+    } else {
+        CloseHandle(hFile);
+        return true;
+    }
+}
+
+/*
+ * Loads or reloads a library if it has changed.
+ *
+ * To make reloading work without running into file locks,
+ * the DLL is copied to a temp file and that temp file
+ * is the DLL actually being loaded.
+ *
+ * Reloading is mainly for debug builds and quick iteration,
+ * but for now the copy step is always enabled.
+ */
+static bool LoadLibraryInternal(char* path, DynamicLibrary* lib) {
+    char tempName[MAX_PATH];
+
     bool isFirstLoad = lib->lastWrite == 0;
 
-    uint64_t lastWrite = LastFileWrite(name);
-    if (lib->lastWrite == lastWrite) {
+    uint64_t lastWrite = LastFileWrite(path);
+    if (lastWrite == 0 || lib->lastWrite == lastWrite) {
         return false;
     }
 
-    if (!isFirstLoad && !FreeLibrary(lib->handle)) {
+    if (IsFileLocked(path)) {
         return false;
     }
 
-    int len = strlen(name);
-    strncpy(tempName, name, len - 4); // remove .dll
+    if (!isFirstLoad) {
+        bool didFree = FreeLibrary(lib->handle);
+        Assert(didFree, "Unable to free DLL when reloading");
+    }
+
+    int len = strlen(path);
+    strncpy(tempName, path, len - 4);
     tempName[len - 4] = '\0';
     strcat(tempName, "_temp.dll");
-    if(!CopyFileA(name, tempName, false)) {
-        return false;
+
+    bool didCopy = CopyFileA(path, tempName, false);
+    if (!didCopy) {
+        DWORD err = GetLastError();
+        AssertFail("Unable to copy DLL\nsource = %s\ndest = %s\nerror = %d", path, tempName, err);
     }
 
     HMODULE handle = LoadLibraryA(tempName);
-    if (handle == NULL) {
-        return false;
-    }
+    Assert(handle != NULL, "Unable to load DLL %s", tempName);
 
     lib->handle = handle;
     lib->lastWrite = lastWrite;

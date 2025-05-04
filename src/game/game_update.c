@@ -3,18 +3,20 @@
 static void UpdateCamera(float deltaTime, Input input, Camera3D* camera3D, Camera3D startingCamera);
 static void DrawTriangles(GameState* gameState, Platform* platform);
 
-static Color black = { 0, 0, 0, 1 };
-static Color red = { 1, 0, 0, 1 };
-static Color green = { 0, 1, 0, 1 };
-static Color blue = { 0, 0, 1, 1 };
-static float cameraSpeed = 400;
-
 void GameUpdate(float deltaTime, GameState* gameState, Platform* platform) {
     UpdateCamera(deltaTime, platform->input, &gameState->camera, gameState->startingCamera);
     DrawTriangles(gameState, platform);
 }
 
+static float cameraSpeed = 400;
+static Color black = { 0, 0, 0, 1 };
+static Color red = { 1, 0, 0, 1 };
+static Color green = { 0, 1, 0, 1 };
+static Color blue = { 0, 0, 1, 1 };
+
+
 static void UpdateCamera(float deltaTime, Input input, Camera3D* camera3D, Camera3D startingCamera) {
+
     float speed = cameraSpeed;
     float step = speed * deltaTime;
 

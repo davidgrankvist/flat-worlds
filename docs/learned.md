@@ -110,3 +110,15 @@ placeholder near/far planes (as Z is ignored).
 In 3D the camera has a position and a target it looks towards (as well as some other parameters). There are two major steps in the transform.
 First coordinates need to be moved so that the camera position is the origin (view transform). Then the coordinates need to transformed
 to take into account the frustum. If you want a perspective effect, use perspective projection. If not, use orthographic projection.
+
+## Hot reloading
+
+To speed up the feedback loop, you can reload game code while the game is running. Here's one way:
+1. separate the per-frame game update code from the game loop
+2. build the game update code as a dynamic library
+3. in the game loop, reload that library when it has changed
+4. assign a function pointer to the reloaded game update function
+
+The platform layer can support the game code with the library loading utilities.
+
+One caveat is locked files. The application will lock the loaded library and the debugger might lock the debug symbol file. You can work around this by copying the original files to temporary files and loading the copies instead.
