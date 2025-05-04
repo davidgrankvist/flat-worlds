@@ -48,6 +48,8 @@ void SetResolutionGl(int width, int height);
 void MakeDrawCallGl();
 static void InitTiming();
 static inline int64_t GetMicroTicks();
+static bool LoadLibraryInternal(char* name, DynamicLibrary* lib);
+static void* LoadLibraryFunction(char* name, DynamicLibrary* lib);
 
 // -- State --
 
@@ -109,6 +111,11 @@ Platform InitPlatformWin32() {
     timer.Reset = ResetTimer;
     timer.GetTicks = GetMicroTicks;
     platform.timer = timer;
+
+    LibraryLoader libLoader = {};
+    libLoader.LoadLibrary = LoadLibraryInternal;
+    libLoader.LoadLibraryFunction = LoadLibraryFunction;
+    platform.libLoader = libLoader;
 
     return platform;
 }
@@ -468,4 +475,61 @@ static void MicroSleep(int us) {
     }
 
     while(GetMicroTicks() - usStart < us) {}
+}
+
+// -- Dynamic loading --
+
+static char tempName[256];
+
+static uint64_t LastFileWrite(char* name) {
+    WIN32_FIND_DATAA findData = {};
+    HANDLE fileHandle = FindFirstFileA(name, &findData);
+
+    Assert(fileHandle != INVALID_HANDLE_VALUE, "Invalid file handle when checking last write time of %s", name);
+
+    FILETIME lastWriteFt = findData.ftLastWriteTime;
+    ULARGE_INTEGER ull;
+    ull.LowPart = lastWriteFt.dwLowDateTime;
+    ull.HighPart = lastWriteFt.dwHighDateTime;
+    uint64_t lastWrite = ull.QuadPart;
+
+    return lastWrite;
+}
+
+static bool LoadLibraryInternal(char* name, DynamicLibrary* lib) {
+    bool isFirstLoad = lib->lastWrite == 0;
+
+    uint64_t lastWrite = LastFileWrite(name);
+    if (lib->lastWrite == lastWrite) {
+        return false;
+    }
+
+    if (!isFirstLoad && !FreeLibrary(lib->handle)) {
+        return false;
+    }
+
+    int len = strlen(name);
+    strncpy(tempName, name, len - 4); // remove .dll
+    tempName[len - 4] = '\0';
+    strcat(tempName, "_temp.dll");
+    if(!CopyFileA(name, tempName, false)) {
+        return false;
+    }
+
+    HMODULE handle = LoadLibraryA(tempName);
+    if (handle == NULL) {
+        return false;
+    }
+
+    lib->handle = handle;
+    lib->lastWrite = lastWrite;
+
+    return true;
+}
+
+static void* LoadLibraryFunction(char* name, DynamicLibrary* lib) {
+    if (lib->handle == NULL) {
+        return NULL;
+    }
+    return GetProcAddress(lib->handle, name);
 }

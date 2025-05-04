@@ -166,6 +166,25 @@ typedef struct {
     uint64_t (*GetTicks)(); // microseconds
 } Timer;
 
+// -- Dynamic loading --
+
+// File handle wrapper to manage load/reload. Zero this struct before first usage.
+typedef struct {
+    // internal fields - do not edit manually
+    void* handle;
+    uint64_t lastWrite;
+} DynamicLibrary;
+
+typedef struct {
+    /*
+     * Load or reload a library if it has changed. Returns true if a loading or reload was done.
+     *
+     * Files are copied to avoid file locks.
+     */
+    bool (*LoadLibrary)(char* libraryName, DynamicLibrary* lib);
+    void* (*LoadLibraryFunction)(char* functionName, DynamicLibrary* lib);
+} LibraryLoader;
+
 // -- Platform API combined struct --
 
 typedef struct {
@@ -173,6 +192,7 @@ typedef struct {
     Input input;
     Render render;
     Timer timer;
+    LibraryLoader libLoader;
 } Platform;
 
 // -- Set up platform specifics --
