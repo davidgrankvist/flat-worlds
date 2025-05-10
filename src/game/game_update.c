@@ -1,10 +1,10 @@
 #include "game_update.h"
 
-static void UpdateCamera(float deltaTime, GameState* gameState, Platform* platform);
+static void UpdateCamera(float deltaTime, GameState* gameState);
 static void DrawTriangles(GameState* gameState, Platform* platform);
 
 void GameUpdate(float deltaTime, GameState* gameState, Platform* platform) {
-    UpdateCamera(deltaTime, gameState, platform);
+    UpdateCamera(deltaTime, gameState);
     DrawTriangles(gameState, platform);
 }
 
@@ -16,9 +16,7 @@ static Color blue = { 0, 0, 1, 1 };
 static float movementSpeed = 400;
 static float rotationSpeed = 1;
 
-static void UpdateCamera(float deltaTime, GameState* gameState, Platform* platform) {
-    Input input = platform->input;
-    Render render = platform->render;
+static void UpdateCamera(float deltaTime, GameState* gameState) {
     Camera3D* camera = &gameState->camera;
 
     float movementStep = movementSpeed * deltaTime;
@@ -29,59 +27,59 @@ static void UpdateCamera(float deltaTime, GameState* gameState, Platform* platfo
     float pitch = 0;
     float roll = 0;
 
-    if (input.IsKeyPressed(KeyR)) {
+    if (IsKeyPressed(KeyR)) {
         gameState->camera = gameState->startingCamera;
     }
-    if (input.IsKeyDown(KeyW)) {
+    if (IsKeyDown(KeyW)) {
         offset.z += movementStep;
     }
-    if (input.IsKeyDown(KeyS)) {
+    if (IsKeyDown(KeyS)) {
         offset.z -= movementStep;
     }
-    if (input.IsKeyDown(KeyA)) {
+    if (IsKeyDown(KeyA)) {
         offset.x -= movementStep;
     }
-    if (input.IsKeyDown(KeyD)) {
+    if (IsKeyDown(KeyD)) {
         offset.x += movementStep;
     }
-    if (input.IsKeyDown(KeyJ)) {
+    if (IsKeyDown(KeyJ)) {
         offset.y -= movementStep;
     }
-    if (input.IsKeyDown(KeyK)) {
+    if (IsKeyDown(KeyK)) {
         offset.y += movementStep;
     }
 
-    if (input.IsKeyDown(KeyLeft)) {
+    if (IsKeyDown(KeyLeft)) {
         yaw += angleStep;
     }
-    if (input.IsKeyDown(KeyRight)) {
+    if (IsKeyDown(KeyRight)) {
         yaw -= angleStep;
     }
-    if (input.IsKeyDown(KeyUp)) {
+    if (IsKeyDown(KeyUp)) {
         pitch += angleStep;
     }
-    if (input.IsKeyDown(KeyDown)) {
+    if (IsKeyDown(KeyDown)) {
         pitch -= angleStep;
     }
-    if (input.IsKeyDown(KeyE)) {
+    if (IsKeyDown(KeyE)) {
         roll += angleStep;
     }
-    if (input.IsKeyDown(KeyQ)) {
+    if (IsKeyDown(KeyQ)) {
         roll -= angleStep;
     }
 
-    if (input.IsKeyPressed(KeyO)) {
+    if (IsKeyPressed(KeyO)) {
         gameState->orbitMode = !gameState->orbitMode;
     }
 
     if (gameState->orbitMode) {
         float azimuth = -yaw;
         float elevation = pitch;
-        render.OrbitCameraAboutTarget(camera, azimuth, elevation);
-        render.MoveCameraTowardsTarget(camera, offset.z);
+        OrbitCameraAboutTarget(camera, azimuth, elevation);
+        MoveCameraTowardsTarget(camera, offset.z);
     } else {
-        render.RotateCameraFirstPerson(camera, yaw, pitch, roll);
-        render.MoveCameraFirstPerson(camera, offset);
+        RotateCameraFirstPerson(camera, yaw, pitch, roll);
+        MoveCameraFirstPerson(camera, offset);
     }
 }
 

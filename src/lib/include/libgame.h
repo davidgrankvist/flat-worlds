@@ -13,6 +13,11 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+
+// -- Set up platform specifics --
+
+#include "libgame_platform.h"
+
 // -- Math --
 // Just the types here. See libgame_math.h for math functions.
 
@@ -75,21 +80,22 @@ typedef enum {
 typedef struct {
     // consume input and update key up/down states, etc.
     void (*ProcessInput)();
-    /*
-     * Down = currently held down
-     * Pressed = changed from up to down
-     * Released = changed from down to up
-     */
-    bool (*IsKeyDown)(InputKey key);
-    bool (*IsKeyPressed)(InputKey key);
-    bool (*IsKeyReleased)(InputKey key);
-    bool (*IsMouseDown)(InputMouseButton btn);
-    bool (*IsMousePressed)(InputMouseButton btn);
-    bool (*IsMouseReleased)(InputMouseButton btn);
-    // mouse position in screen coordinates
-    int (*GetMouseInputX)();
-    int (*GetMouseInputY)();
 } Input;
+
+/*
+ * Down = currently held down
+ * Pressed = changed from up to down
+ * Released = changed from down to up
+ */
+LIBGAME_EXPORT bool IsKeyDown(InputKey key);
+LIBGAME_EXPORT bool IsKeyPressed(InputKey key);
+LIBGAME_EXPORT bool IsKeyReleased(InputKey key);
+LIBGAME_EXPORT bool IsMouseDown(InputMouseButton btn);
+LIBGAME_EXPORT bool IsMousePressed(InputMouseButton btn);
+LIBGAME_EXPORT bool IsMouseReleased(InputMouseButton btn);
+// mouse position in screen coordinates
+LIBGAME_EXPORT int GetMouseInputX();
+LIBGAME_EXPORT int GetMouseInputY();
 
 // -- Graphics --
 
@@ -133,12 +139,13 @@ typedef struct {
     void (*DrawTriangle3D)(Vec3 a, Vec3 b, Vec3 c, Color color);
     void (*SetCamera2D)(Camera2D* camera);
     void (*SetCamera3D)(Camera3D* camera);
-    Camera3D (*GetDefaultCamera3D)();
-    void (*RotateCameraFirstPerson)(Camera3D* camera, float yaw, float pitch, float roll);
-    void (*MoveCameraFirstPerson)(Camera3D* camera, Vec3 relativeOffset);
-    void (*OrbitCameraAboutTarget)(Camera3D* camera, float azimuth, float elevation);
-    void (*MoveCameraTowardsTarget)(Camera3D* camera, float distanceOffset);
 } Render;
+
+LIBGAME_EXPORT Camera3D GetDefaultCamera3D();
+LIBGAME_EXPORT void RotateCameraFirstPerson(Camera3D* camera, float yaw, float pitch, float roll);
+LIBGAME_EXPORT void MoveCameraFirstPerson(Camera3D* camera, Vec3 relativeOffset);
+LIBGAME_EXPORT void OrbitCameraAboutTarget(Camera3D* camera, float azimuth, float elevation);
+LIBGAME_EXPORT void MoveCameraTowardsTarget(Camera3D* camera, float distanceOffset);
 
 // -- Window --
 
@@ -156,13 +163,11 @@ typedef struct {
 #define TICKS_PER_SECOND 1000000
 #define TICKS_TO_SECONDS(t) ((float)(t) / (float)(TICKS_PER_SECOND))
 
-typedef struct {
-    void (*SetTargetFps)(int fps);
-    int (*GetFps)();
-    void (*SleepUntilNextFrame)();
-    void (*Reset)();
-    uint64_t (*GetTicks)(); // microseconds
-} Timer;
+LIBGAME_EXPORT uint64_t GetTicks(); // microseconds
+LIBGAME_EXPORT void SetTargetFps(int fps);
+LIBGAME_EXPORT int GetFps();
+LIBGAME_EXPORT void SleepUntilNextFrame();
+LIBGAME_EXPORT void ResetFpsTimer();
 
 // -- Dynamic loading --
 
@@ -197,13 +202,8 @@ typedef struct {
     Window window;
     Input input;
     Render render;
-    Timer timer;
     LibraryLoader libLoader;
 } Platform;
-
-// -- Set up platform specifics --
-
-#include "libgame_platform.h"
 
 LIBGAME_EXPORT Platform* GetPlatform();
 

@@ -51,8 +51,7 @@ static void SetTransform(Mat4 mat);
 static void EndFrame();
 
 static void MakeDrawCallGl();
-static void InitTiming();
-static inline int64_t GetMicroTicks();
+static void InitTimingWin32();
 static void ResolvePath(char* name, FileExtensionType extension, char* out, int outSize);
 static bool LoadLibraryInternal(char* name, DynamicLibrary* lib);
 static void* LoadLibraryFunction(char* name, DynamicLibrary* lib);
@@ -101,14 +100,6 @@ static Platform InitPlatformWin32() {
 
     Input input = {};
     input.ProcessInput = ProcessInput;
-    input.IsKeyDown = IsKeyDown;
-    input.IsKeyPressed = IsKeyPressed;
-    input.IsKeyReleased = IsKeyReleased;
-    input.IsMouseDown = IsMouseDown;
-    input.IsMousePressed = IsMousePressed;
-    input.IsMouseReleased = IsMouseReleased;
-    input.GetMouseInputX = GetMouseInputX;
-    input.GetMouseInputY = GetMouseInputY;
     platform.input = input;
 
     Render render = {};
@@ -120,21 +111,9 @@ static Platform InitPlatformWin32() {
     render.EndFrame = EndFrame;
     render.SetCamera2D = SetCamera2DGl;
     render.SetCamera3D = SetCamera3DGl;
-    render.GetDefaultCamera3D = GetDefaultCamera3D;
-    render.RotateCameraFirstPerson = RotateCameraFirstPerson;
-    render.MoveCameraFirstPerson = MoveCameraFirstPerson;
-    render.OrbitCameraAboutTarget = OrbitCameraAboutTarget;
-    render.MoveCameraTowardsTarget = MoveCameraTowardsTarget;
     platform.render = render;
 
-    InitTiming();
-    Timer timer = {};
-    timer.SetTargetFps = SetTargetFps;
-    timer.GetFps = GetFps;
-    timer.SleepUntilNextFrame = SleepUntilNextFrame;
-    timer.Reset = ResetTimer;
-    timer.GetTicks = GetMicroTicks;
-    platform.timer = timer;
+    InitTimingWin32();
 
     LibraryLoader libLoader = {};
     libLoader.ResolvePath = ResolvePath;
@@ -432,49 +411,28 @@ static void EndFrame() {
 
 // -- Timing --
 
-static int64_t usPerSecond = 1000000;
 static int64_t usPerMs = 1000;
-static int64_t usPerTick = 0; // Dummy value. This is set in InitTiming.
+static int64_t usPerTick = 0; // Dummy value. This is set in InitTimingWin32.
 
 static void MicroSleep(int us);
 
-static void InitTiming() {
-    MMRESULT result = timeBeginPeriod(1);
-    Assert(result == TIMERR_NOERROR, "Unable to set sleep resolution to 1 ms");
-
-    LARGE_INTEGER lpFrequency;
-    bool success = QueryPerformanceFrequency(&lpFrequency);
-    Assert(success, "Unable to check QPC frequency");
-
-    int64_t ticksPerSecond = (int64_t)lpFrequency.QuadPart;
-    Assert(ticksPerSecond >= usPerSecond, "Too low QPC frequency. Unable to use microsecond sleep.");
-
-    usPerTick = ticksPerSecond / usPerSecond;
-
-    PlatformTiming platformTiming = {};
-    platformTiming.GetMicroTicks = GetMicroTicks;
-    platformTiming.MicroSleep = MicroSleep;
-
-    InitPlatformTiming(platformTiming);
-}
-
-static inline int64_t GetTicks() {
+static inline int64_t GetTicksWin32() {
     LARGE_INTEGER ticks;
     int success = QueryPerformanceCounter(&ticks);
     Assert(success, "Failed to call QPC");
     return ticks.QuadPart;
 }
 
-static inline int64_t GetMicroTicks() {
-    return GetTicks() / usPerTick;
+static inline int64_t GetMicroTicksWin32() {
+    return GetTicksWin32() / usPerTick;
 }
 
 // combine millisecond sleep and busy-wait for higher precision
-static void MicroSleep(int us) {
-    int64_t usStart = GetMicroTicks();
+static void MicroSleepWin32(int us) {
+    int64_t usStart = GetMicroTicksWin32();
 
     if (us < usPerMs) {
-        while(GetMicroTicks() - usStart < us) {}
+        while(GetMicroTicksWin32() - usStart < us) {}
         return;
     }
 
@@ -485,7 +443,27 @@ static void MicroSleep(int us) {
         Sleep(loweredUs / usPerMs);
     }
 
-    while(GetMicroTicks() - usStart < us) {}
+    while(GetMicroTicksWin32() - usStart < us) {}
+}
+
+static void InitTimingWin32() {
+    MMRESULT result = timeBeginPeriod(1);
+    Assert(result == TIMERR_NOERROR, "Unable to set sleep resolution to 1 ms");
+
+    LARGE_INTEGER lpFrequency;
+    bool success = QueryPerformanceFrequency(&lpFrequency);
+    Assert(success, "Unable to check QPC frequency");
+
+    int64_t ticksPerSecond = (int64_t)lpFrequency.QuadPart;
+    Assert(ticksPerSecond >= TICKS_PER_SECOND, "Too low QPC frequency. Unable to use microsecond sleep.");
+
+    usPerTick = ticksPerSecond / TICKS_PER_SECOND;
+
+    PlatformTiming platformTiming = {};
+    platformTiming.GetMicroTicks = GetMicroTicksWin32;
+    platformTiming.MicroSleep = MicroSleepWin32;
+
+    InitPlatformTiming(platformTiming);
 }
 
 // -- Dynamic loading --

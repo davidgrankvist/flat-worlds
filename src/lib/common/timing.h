@@ -1,6 +1,8 @@
 /*
- * This header defines timing related utilites that are platform independent.
- * Each platform provides its own primitives like tick counting and sleep functions.
+ * Internal utilities for timing.
+ *
+ * The platform specific code is responsible for setting up
+ * a PlatformTiming before public timing functions are called.
  */
 
 #ifndef timing_h
@@ -14,10 +16,5 @@ typedef struct {
 } PlatformTiming;
 
 void InitPlatformTiming(PlatformTiming timing);
-
-void SetTargetFps(int fps);
-int GetFps();
-void SleepUntilNextFrame();
-void ResetTimer();
 
 #endif

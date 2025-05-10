@@ -2,16 +2,15 @@
 #include "libgame_platform_main.h"
 #include "game_state.h"
 
-static GameState InitGameState(Platform* platform);
+static GameState InitGameState();
 
 int main(int argc, char** argv) {
     Platform* platform = GetPlatform();
     Window window = platform->window;
     Input input = platform->input;
-    Timer timer = platform->timer;
     LibraryLoader libLoader = platform->libLoader;
 
-    GameState gameState = InitGameState(platform);
+    GameState gameState = InitGameState();
 
     DynamicLibrary gameUpdateLib = {0};
     GameUpdateFunc gameUpdateFn;
@@ -23,9 +22,9 @@ int main(int argc, char** argv) {
 
     window.InitWindow();
 
-    timer.Reset();
-    timer.SetTargetFps(60);
-    uint64_t ticks = timer.GetTicks();
+    ResetFpsTimer();
+    SetTargetFps(60);
+    uint64_t ticks = GetTicks();
 
     while (window.IsWindowOpen()) {
         bool didUpdate = libLoader.LoadDynamicLibrary(gameUpdatePath, &gameUpdateLib);
@@ -34,24 +33,24 @@ int main(int argc, char** argv) {
         }
 
         input.ProcessInput();
-        timer.SleepUntilNextFrame();
+        SleepUntilNextFrame();
 
-        if (input.IsKeyPressed(KeyEsc)) {
+        if (IsKeyPressed(KeyEsc)) {
             window.CloseCurrentWindow();
         }
 
-        uint64_t ellapsed = timer.GetTicks() - ticks;
+        uint64_t ellapsed = GetTicks() - ticks;
         float deltaTime = TICKS_TO_SECONDS(ellapsed);
 
         gameUpdateFn(deltaTime, &gameState, platform);
 
-        ticks = timer.GetTicks();
+        ticks = GetTicks();
     }
 
     return 0;
 }
 
-static GameState InitGameState(Platform* platform) {
+static GameState InitGameState() {
     float refSize = 50;
 
     GameState gameState = {0};
@@ -83,7 +82,7 @@ static GameState InitGameState(Platform* platform) {
     gameState.bRef3 = (Vec3) { -refSize, 0, refSize };
     gameState.cRef3 = (Vec3) { 0, 0, refSize };
 
-    Camera3D camera3D = platform->render.GetDefaultCamera3D();
+    Camera3D camera3D = GetDefaultCamera3D();
     Camera3D startingCamera = camera3D;
 
     gameState.camera = camera3D;

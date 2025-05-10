@@ -1,13 +1,17 @@
+#include "libgame.h"
 #include "timing.h"
 #include "asserts.h"
 
-PlatformTiming timing = {};
-static int64_t usPerSecond = 1000000;
+PlatformTiming platformTiming = {};
 static int64_t targetFps = 60;
 static int64_t ticksStart = 0;
 
 void InitPlatformTiming(PlatformTiming pt) {
-   timing = pt;
+   platformTiming = pt;
+}
+
+uint64_t GetTicks() {
+    return platformTiming.GetMicroTicks();
 }
 
 void SetTargetFps(int fps) {
@@ -20,18 +24,18 @@ int GetFps() {
 }
 
 void SleepUntilNextFrame() {
-    int64_t ellapsed = timing.GetMicroTicks() - ticksStart;
-    int64_t targetUsPerFrame = usPerSecond / targetFps;
+    int64_t ellapsed = platformTiming.GetMicroTicks() - ticksStart;
+    int64_t targetUsPerFrame = TICKS_PER_SECOND / targetFps;
 
     int64_t delta = targetUsPerFrame - ellapsed;
 
     if (delta > 0) {
-        timing.MicroSleep(delta);
+        platformTiming.MicroSleep(delta);
     }
 
-    ResetTimer();
+    ResetFpsTimer();
 }
 
-void ResetTimer() {
-    ticksStart = timing.GetMicroTicks();
+void ResetFpsTimer() {
+    ticksStart = platformTiming.GetMicroTicks();
 }

@@ -1,3 +1,4 @@
+#include "libgame.h"
 #include "camera.h"
 #include "libgame_math.h"
 
@@ -22,7 +23,6 @@ Mat4 GetCameraTransform() {
     }
     return fallBackTransform;
 }
-
 
 // -- 2D --
 

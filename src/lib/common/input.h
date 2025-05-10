@@ -1,8 +1,8 @@
 /*
- * This header defines input related utilities that are platform independent.
- * The idea is to support the platform layer implementations with some shared code.
+ * Internal input related utilities to modify the input state.
  *
- * Each platform layer is responsible for mapping to the common key code format.
+ * The platform specific code is responsible for mapping key codes
+ * and updating input buffers at the right time.
  */
 
 #ifndef input_h
@@ -10,22 +10,11 @@
 
 #include "libgame.h"
 
-// helpers to set up input state from the platform-specific code
 void UpdateInputBuffers(); // call at beginning of ProcessInput
 void SetKeyDown(InputKey key);
 void SetKeyUp(InputKey key);
 void SetMousePosition(int x, int y);
 void SetMouseDown(InputMouseButton btn);
 void SetMouseUp(InputMouseButton btn);
-
-// platform layer API
-bool IsKeyDown(InputKey key);
-bool IsKeyPressed(InputKey key);
-bool IsKeyReleased(InputKey key);
-bool IsMouseDown(InputMouseButton btn);
-bool IsMousePressed(InputMouseButton btn);
-bool IsMouseReleased(InputMouseButton btn);
-int GetMouseInputX();
-int GetMouseInputY();
 
 #endif
