@@ -281,12 +281,12 @@ Mat4 Mat4ViewTransform(Vec3 target, Vec3 position, Vec3 worldUp) {
     return viewTransform;
 }
 
-Mat4 Mat4Perspective(float fov, float aspect, float near, float far) {
-    float tanHalfFov = tanf(fov / 2);
+Mat4 Mat4Perspective(float fovY, float aspect, float near, float far) {
+    float tanHalfFovY = tanf(fovY / 2);
     Mat4 transform =
     {{
-         { 1 / (aspect * tanHalfFov), 0, 0, 0 },
-         { 0, 1 / tanHalfFov, 0, 0 },
+         { 1 / (aspect * tanHalfFovY), 0, 0, 0 },
+         { 0, 1 / tanHalfFovY, 0, 0 },
          { 0, 0, (far + near) / (far - near), -(2 * far * near) / (far - near) },
          { 0, 0, 1, 0}
      }};

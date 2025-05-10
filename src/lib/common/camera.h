@@ -13,5 +13,6 @@ void SetCameraTransform2D(Camera2D* camera);
 void SetCameraTransform3D(Camera3D* camera);
 // get the current transform, which may be for either a 2D or 3D camera depending on previously set settings
 Mat4 GetCameraTransform();
+Camera3D GetDefaultCamera3D();
 
 #endif

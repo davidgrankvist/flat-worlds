@@ -21,6 +21,7 @@
 #include "input.h"
 #include "timing.h"
 #include "asserts.h"
+#include "camera.h"
 
 // -- Forward declarations (public API) --
 
@@ -119,6 +120,7 @@ static Platform InitPlatformWin32() {
     render.EndFrame = EndFrame;
     render.SetCamera2D = SetCamera2DGl;
     render.SetCamera3D = SetCamera3DGl;
+    render.GetDefaultCamera3D = GetDefaultCamera3D;
     platform.render = render;
 
     InitTiming();

@@ -7,6 +7,10 @@
 
 #include "libgame.h"
 
+#define PI 3.14159265358979323846
+#define DEGREES_TO_RADIANS (PI/180.0f)
+#define RADIANS_TO_DEGREES (180.0f/PI)
+
 // All angles are in radians and counterclockwise.
 
 LIBGAME_EXPORT Mat4 Mat4Identity();
@@ -24,7 +28,7 @@ LIBGAME_EXPORT Mat4 Mat4Ortho(float left, float right,
         float bottom, float top,
         float near, float far);
 LIBGAME_EXPORT Mat4 Mat4ViewTransform(Vec3 target, Vec3 position, Vec3 localUp);
-LIBGAME_EXPORT Mat4 Mat4Perspective(float fov, float aspect, float near, float far);
+LIBGAME_EXPORT Mat4 Mat4Perspective(float fieldOfViewY, float aspectRatio, float nearPlane, float farPlane);
 
 LIBGAME_EXPORT Vec2 Vec2Scale(Vec2 vec, float scale);
 LIBGAME_EXPORT Vec3 Vec3Scale(Vec3 vec, float scale);

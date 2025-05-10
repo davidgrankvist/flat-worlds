@@ -106,9 +106,15 @@ typedef struct {
 } Camera2D;
 
 typedef struct {
+    // position / orientation
     Vec3 position;
     Vec3 target;
     Vec3 up;
+    // frustum
+    float fieldOfViewY;
+    float nearPlane;
+    float farPlane;
+    float aspectRatio; // set to 0 to use the entire client area
 } Camera3D;
 
 /*
@@ -133,6 +139,7 @@ typedef struct {
     void (*DrawTriangle3D)(Vec3 a, Vec3 b, Vec3 c, Color color);
     void (*SetCamera2D)(Camera2D* camera);
     void (*SetCamera3D)(Camera3D* camera);
+    Camera3D (*GetDefaultCamera3D)();
 } Render;
 
 // -- Window --

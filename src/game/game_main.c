@@ -2,7 +2,7 @@
 #include "libgame_platform_main.h"
 #include "game_state.h"
 
-static GameState InitGameState();
+static GameState InitGameState(Platform* platform);
 
 int main(int argc, char** argv) {
     Platform* platform = GetPlatform();
@@ -11,7 +11,7 @@ int main(int argc, char** argv) {
     Timer timer = platform->timer;
     LibraryLoader libLoader = platform->libLoader;
 
-    GameState gameState = InitGameState();
+    GameState gameState = InitGameState(platform);
 
     DynamicLibrary gameUpdateLib = {0};
     GameUpdateFunc gameUpdateFn;
@@ -51,7 +51,7 @@ int main(int argc, char** argv) {
     return 0;
 }
 
-static GameState InitGameState() {
+static GameState InitGameState(Platform* platform) {
     float refSize = 50;
 
     GameState gameState = {0};
@@ -83,11 +83,7 @@ static GameState InitGameState() {
     gameState.bRef3 = (Vec3) { -refSize, 0, refSize };
     gameState.cRef3 = (Vec3) { 0, 0, refSize };
 
-    Camera3D camera3D = {0};
-    camera3D.position = (Vec3) { 0, 0, -250 };
-    camera3D.target = (Vec3) { 0, 0, 0 };
-    camera3D.up = (Vec3) { 0, 1, 0};
-
+    Camera3D camera3D = platform->render.GetDefaultCamera3D();
     Camera3D startingCamera = camera3D;
 
     gameState.camera = camera3D;

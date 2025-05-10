@@ -6,6 +6,7 @@ static int clientHeight = 0;
 static Mat4 transform = {};
 static Mat4 fallBackTransform = {};
 static bool didSetCamera = false;
+static float dummyAspectRatio = 0;
 
 void SetCameraClientArea(int width, int height) {
     clientWidth = width;
@@ -24,11 +25,8 @@ void SetCameraTransform2D(Camera2D* camera) {
 void SetCameraTransform3D(Camera3D* camera) {
     Mat4 view = Mat4ViewTransform(camera->target, camera->position, camera->up);
 
-    float fov = 3.14 / 4;
-    float aspect = clientWidth / (float) clientHeight;
-    float near = 0.01;
-    float far = 1000;
-    Mat4 perspective = Mat4Perspective(fov, aspect, near, far);
+    float aspectRatio = camera->aspectRatio > dummyAspectRatio ? camera->aspectRatio : clientWidth / (float) clientHeight;
+    Mat4 perspective = Mat4Perspective(camera->fieldOfViewY, aspectRatio, camera->nearPlane, camera->farPlane);
 
     Mat4 cameraTransform = Mat4Multiply(perspective, view);
     transform = cameraTransform;
@@ -41,4 +39,19 @@ Mat4 GetCameraTransform() {
         return transform;
     }
     return fallBackTransform;
+}
+
+Camera3D GetDefaultCamera3D() {
+    Camera3D camera = {0};
+
+    camera.position = (Vec3) { 0, 0, -250 };
+    camera.target = (Vec3) { 0, 0, 0 };
+    camera.up = (Vec3) { 0, 1, 0};
+
+    camera.fieldOfViewY = PI / 4;
+    camera.nearPlane = 0.01;
+    camera.farPlane = 1000;
+    camera.aspectRatio = dummyAspectRatio;
+
+    return camera;
 }
