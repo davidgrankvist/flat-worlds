@@ -116,7 +116,7 @@ Mat4 Mat4Translate(Vec3 offs) {
     return transform;
 }
 
-Mat4 Mat4Translate2(Vec2 offs) {
+Mat4 Mat4Translate2D(Vec2 offs) {
     return Mat4Translate(Vec2ToVec3(offs));
 }
 
@@ -220,29 +220,29 @@ float Vec3Dot(Vec3 a, Vec3 b) {
    return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
-Mat4 Mat4RotateAbout2(Vec2 center, float angle) {
-    return Mat4RotateAbout((Vec3){ center.x, center.y, 0}, angle);
+inline Mat4 Mat4Rotate2D(float angle) {
+    return Mat4RotateZ(angle);
 }
 
-Mat4 Mat4RotateAbout(Vec3 center, float angle) {
-    Vec3 centerInverse = Vec3Scale(center, -1);
-    Mat4 translate = Mat4Translate(centerInverse);
+Vec2 Vec2Rotate(Vec2 vec, float angle) {
+    Mat4 rotate = Mat4Rotate2D(angle);
+    Vec2 rotated = Vec2Transform(vec, rotate);
+    return rotated;
+}
+
+Mat4 Mat4RotateAboutOrigin2D(Vec2 origin, float angle) {
+    Vec2 originInverse = Vec2Scale(origin, -1);
+    Mat4 translate = Mat4Translate2D(originInverse);
     Mat4 rotate = Mat4RotateZ(angle);
-    Mat4 translateBack = Mat4Translate(center);
+    Mat4 translateBack = Mat4Translate2D(origin);
 
     Mat4 transforms[] = { translate, rotate, translateBack };
     Mat4 transform = Mat4MultiplyAllRev(transforms, 3);
     return transform;
 }
 
-Vec3 Vec3RotateAbout(Vec3 vec, Vec3 center, float angle) {
-    Mat4 transform = Mat4RotateAbout(center, angle);
-    Vec3 result = Vec3Transform(vec, transform);
-    return result;
-}
-
-Vec2 Vec2RotateAbout(Vec2 vec, Vec2 center, float angle) {
-    Mat4 transform = Mat4RotateAbout2(center, angle);
+Vec2 Vec2RotateAboutOrigin(Vec2 vec, Vec2 origin, float angle) {
+    Mat4 transform = Mat4RotateAboutOrigin2D(origin, angle);
     Vec2 result = Vec2Transform(vec, transform);
     return result;
 }
@@ -291,4 +291,21 @@ Mat4 Mat4Perspective(float fovY, float aspect, float near, float far) {
          { 0, 0, 1, 0}
      }};
     return transform; 
+}
+
+Vec3 Vec3RotateAboutAxis(Vec3 vec, Vec3 axis, float angle) {
+    float c = cosf(angle); 
+    float s = sinf(angle); 
+
+    // Rodrigues' formula (left-handed)
+    Vec3 naxis = Vec3Normalize(axis);
+    Vec3 cross = Vec3Cross(naxis, vec);
+    float dot = Vec3Dot(naxis, vec);
+    Vec3 rotated = {
+        vec.x * c - cross.x * s + naxis.x * dot * (1 - c),
+        vec.y * c - cross.y * s + naxis.y * dot * (1 - c),
+        vec.z * c - cross.z * s + naxis.z * dot * (1 - c),
+    };
+
+    return rotated;
 }

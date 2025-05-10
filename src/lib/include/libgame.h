@@ -117,13 +117,7 @@ typedef struct {
     float aspectRatio; // set to 0 to use the entire client area
 } Camera3D;
 
-/*
- * All render coordinates (including 2D calls) are in world coordinates (left-handed):
- * - origin = bottom left
- * - X = right
- * - Y = up
- * - Z = towards the screen
- */
+// see libgame_math.h details about coordinate systems
 typedef struct {
     void (*ClearScreen)(Color color);
     /*
@@ -140,6 +134,7 @@ typedef struct {
     void (*SetCamera2D)(Camera2D* camera);
     void (*SetCamera3D)(Camera3D* camera);
     Camera3D (*GetDefaultCamera3D)();
+    void (*RotateCamera3D)(Camera3D* camera, float yaw, float pitch, float roll);
 } Render;
 
 // -- Window --

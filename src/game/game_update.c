@@ -1,47 +1,82 @@
 #include "game_update.h"
 
-static void UpdateCamera(float deltaTime, Input input, Camera3D* camera3D, Camera3D startingCamera);
+static void UpdateCamera(float deltaTime, Platform* platform, Camera3D* camera3D, Camera3D startingCamera);
 static void DrawTriangles(GameState* gameState, Platform* platform);
 
 void GameUpdate(float deltaTime, GameState* gameState, Platform* platform) {
-    UpdateCamera(deltaTime, platform->input, &gameState->camera, gameState->startingCamera);
+    UpdateCamera(deltaTime, platform, &gameState->camera, gameState->startingCamera);
     DrawTriangles(gameState, platform);
 }
 
-static float cameraSpeed = 400;
 static Color black = { 0, 0, 0, 1 };
 static Color red = { 1, 0, 0, 1 };
 static Color green = { 0, 1, 0, 1 };
 static Color blue = { 0, 0, 1, 1 };
 
+static float movementSpeed = 400;
+static float rotationSpeed = 1;
 
-static void UpdateCamera(float deltaTime, Input input, Camera3D* camera3D, Camera3D startingCamera) {
+static void UpdateCamera(float deltaTime, Platform* platform, Camera3D* camera, Camera3D startingCamera) {
+    Input input = platform->input;
+    Render render = platform->render;
 
-    float speed = cameraSpeed;
-    float step = speed * deltaTime;
+    float movementStep = movementSpeed * deltaTime;
+    float x = 0;
+    float y = 0;
+    float z = 0;
 
-    if (input.IsKeyDown(KeyRight)) {
-        camera3D->position.x += step;
-    }
-    if (input.IsKeyDown(KeyLeft)) {
-        camera3D->position.x -= step;
-    }
-    if (input.IsKeyDown(KeyUp)) {
-        camera3D->position.y += step;
-    }
-    if (input.IsKeyDown(KeyDown)) {
-        camera3D->position.y -= step;
+    float angleStep = rotationSpeed * deltaTime;
+    float yaw = 0;
+    float pitch = 0;
+    float roll = 0;
+
+    if (input.IsKeyPressed(KeyR)) {
+        *camera = startingCamera;
     }
     if (input.IsKeyDown(KeyW)) {
-        camera3D->position.z += step;
+        z += movementStep;
     }
     if (input.IsKeyDown(KeyS)) {
-        camera3D->position.z -= step;
+        z -= movementStep;
     }
-    if (input.IsKeyPressed(KeyR)) {
-        *camera3D = startingCamera;
+    if (input.IsKeyDown(KeyA)) {
+        x -= movementStep;
+    }
+    if (input.IsKeyDown(KeyD)) {
+        x += movementStep;
+    }
+    if (input.IsKeyDown(KeyJ)) {
+        y -= movementStep;
+    }
+    if (input.IsKeyDown(KeyK)) {
+        y += movementStep;
     }
 
+    if (input.IsKeyDown(KeyLeft)) {
+        yaw += angleStep;
+    }
+    if (input.IsKeyDown(KeyRight)) {
+        yaw -= angleStep;
+    }
+    if (input.IsKeyDown(KeyUp)) {
+        pitch += angleStep;
+    }
+    if (input.IsKeyDown(KeyDown)) {
+        pitch -= angleStep;
+    }
+    if (input.IsKeyDown(KeyE)) {
+        roll += angleStep;
+    }
+    if (input.IsKeyDown(KeyQ)) {
+        roll -= angleStep;
+    }
+
+    render.RotateCamera3D(camera, yaw, pitch, roll);
+
+    // simplified movement for testing, not correct relative to rotation
+    camera->position.x += x;
+    camera->position.y += y;
+    camera->position.z += z;
 }
 
 static void DrawTriangles(GameState* gameState, Platform* platform) {

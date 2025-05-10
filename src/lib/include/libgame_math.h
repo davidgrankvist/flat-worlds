@@ -1,5 +1,17 @@
 /*
  * Public header - math.
+ *
+ * 2D coordinates:
+ * - origin = bottom left
+ * - X = right
+ * - Y = up
+ *
+ * 3D coordinates (left-handed)
+ * - X = right
+ * - Y = up
+ * - Z = towards the screen
+ *
+ * All angles are in radians and counterclockwise.
  */
 
 #ifndef libgame_math_h
@@ -7,11 +19,10 @@
 
 #include "libgame.h"
 
-#define PI 3.14159265358979323846
-#define DEGREES_TO_RADIANS (PI/180.0f)
-#define RADIANS_TO_DEGREES (180.0f/PI)
+#define PI 3.14159265358979323846f
+#define DEGREES_TO_RADIANS (PI / 180.0f)
+#define RADIANS_TO_DEGREES (180.0f / PI)
 
-// All angles are in radians and counterclockwise.
 
 LIBGAME_EXPORT Mat4 Mat4Identity();
 LIBGAME_EXPORT Mat4 Mat4Multiply(Mat4 first, Mat4 second);
@@ -23,7 +34,7 @@ LIBGAME_EXPORT Mat4 Mat4RotateX(float angle);
 LIBGAME_EXPORT Mat4 Mat4RotateY(float angle);
 LIBGAME_EXPORT Mat4 Mat4RotateZ(float angle);
 LIBGAME_EXPORT Mat4 Mat4Translate(Vec3 offs);
-LIBGAME_EXPORT Mat4 Mat4Translate2(Vec2 offs);
+LIBGAME_EXPORT Mat4 Mat4Translate2D(Vec2 offs);
 LIBGAME_EXPORT Mat4 Mat4Ortho(float left, float right,
         float bottom, float top,
         float near, float far);
@@ -44,9 +55,11 @@ LIBGAME_EXPORT Vec3 Vec3Sub(Vec3 a, Vec3 b);
 LIBGAME_EXPORT Vec3 Vec3Cross(Vec3 a, Vec3 b);
 LIBGAME_EXPORT float Vec3Dot(Vec3 a, Vec3 b);
 
-LIBGAME_EXPORT Mat4 Mat4RotateAbout2(Vec2 center, float angle);
-LIBGAME_EXPORT Mat4 Mat4RotateAbout(Vec3 center, float angle);
-LIBGAME_EXPORT Vec2 Vec2RotateAbout(Vec2 vec, Vec2 center, float angle);
-LIBGAME_EXPORT Vec3 Vec3RotateAbout(Vec3 vec, Vec3 center, float angle);
+LIBGAME_EXPORT Mat4 Mat4Rotate2D(float angle);
+LIBGAME_EXPORT Mat4 Mat4RotateAboutOrigin2D(Vec2 origin, float angle);
+LIBGAME_EXPORT Vec2 Vec2Rotate(Vec2 vec, float angle);
+LIBGAME_EXPORT Vec2 Vec2RotateAboutOrigin(Vec2 vec, Vec2 origin, float angle);
+
+LIBGAME_EXPORT Vec3 Vec3RotateAboutAxis(Vec3 vec, Vec3 axis, float angle);
 
 #endif

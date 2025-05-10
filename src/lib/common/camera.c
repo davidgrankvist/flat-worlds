@@ -8,11 +8,23 @@ static Mat4 fallBackTransform = {};
 static bool didSetCamera = false;
 static float dummyAspectRatio = 0;
 
+// -- Common --
+
 void SetCameraClientArea(int width, int height) {
     clientWidth = width;
     clientHeight = height;
     fallBackTransform = Mat4Ortho(0, clientWidth, 0, clientHeight, -1, 1);
 }
+
+Mat4 GetCameraTransform() {
+    if (didSetCamera) {
+        return transform;
+    }
+    return fallBackTransform;
+}
+
+
+// -- 2D --
 
 void SetCameraTransform2D(Camera2D* camera) {
    Vec2 origin = camera->origin; 
@@ -21,6 +33,8 @@ void SetCameraTransform2D(Camera2D* camera) {
 
    didSetCamera = true;
 }
+
+// -- 3D --
 
 void SetCameraTransform3D(Camera3D* camera) {
     Mat4 view = Mat4ViewTransform(camera->target, camera->position, camera->up);
@@ -32,13 +46,6 @@ void SetCameraTransform3D(Camera3D* camera) {
     transform = cameraTransform;
 
     didSetCamera = true;
-}
-
-Mat4 GetCameraTransform() {
-    if (didSetCamera) {
-        return transform;
-    }
-    return fallBackTransform;
 }
 
 Camera3D GetDefaultCamera3D() {
@@ -54,4 +61,24 @@ Camera3D GetDefaultCamera3D() {
     camera.aspectRatio = dummyAspectRatio;
 
     return camera;
+}
+
+void RotateCamera3D(Camera3D* camera, float yaw, float pitch, float roll) {
+    // yaw - rotate forward about the initial up
+    Vec3 forward = Vec3Sub(camera->target, camera->position);
+    Vec3 forwardYaw = Vec3RotateAboutAxis(forward, camera->up, yaw); 
+
+    // pitch - rotate the new forward about the new right
+    Vec3 right = Vec3Normalize(Vec3Cross(camera->up, forwardYaw));
+    Vec3 forwardPitch = Vec3RotateAboutAxis(forwardYaw, right, pitch);
+
+    // roll - rotate the initial up about the final forward
+    Vec3 up = Vec3Normalize(Vec3Cross(forwardPitch, right));
+    Vec3 forwardPitchN = Vec3Normalize(forwardPitch);
+    Vec3 upRoll = Vec3RotateAboutAxis(up, forwardPitchN, roll);
+
+    Vec3 target = Vec3Add(forwardPitch, camera->position);
+
+    camera->target = target;
+    camera->up = upRoll;
 }
