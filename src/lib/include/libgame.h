@@ -134,7 +134,8 @@ typedef struct {
     void (*SetCamera2D)(Camera2D* camera);
     void (*SetCamera3D)(Camera3D* camera);
     Camera3D (*GetDefaultCamera3D)();
-    void (*RotateCamera3D)(Camera3D* camera, float yaw, float pitch, float roll);
+    void (*RotateCameraFirstPerson)(Camera3D* camera, float yaw, float pitch, float roll);
+    void (*MoveCameraFirstPerson)(Camera3D* camera, Vec3 relativeOffset);
 } Render;
 
 // -- Window --

@@ -121,7 +121,8 @@ static Platform InitPlatformWin32() {
     render.SetCamera2D = SetCamera2DGl;
     render.SetCamera3D = SetCamera3DGl;
     render.GetDefaultCamera3D = GetDefaultCamera3D;
-    render.RotateCamera3D = RotateCamera3D;
+    render.RotateCameraFirstPerson = RotateCameraFirstPerson;
+    render.MoveCameraFirstPerson = MoveCameraFirstPerson;
     platform.render = render;
 
     InitTiming();

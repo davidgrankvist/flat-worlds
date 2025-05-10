@@ -21,9 +21,7 @@ static void UpdateCamera(float deltaTime, Platform* platform, Camera3D* camera, 
     Render render = platform->render;
 
     float movementStep = movementSpeed * deltaTime;
-    float x = 0;
-    float y = 0;
-    float z = 0;
+    Vec3 offset = {0};
 
     float angleStep = rotationSpeed * deltaTime;
     float yaw = 0;
@@ -34,22 +32,22 @@ static void UpdateCamera(float deltaTime, Platform* platform, Camera3D* camera, 
         *camera = startingCamera;
     }
     if (input.IsKeyDown(KeyW)) {
-        z += movementStep;
+        offset.z += movementStep;
     }
     if (input.IsKeyDown(KeyS)) {
-        z -= movementStep;
+        offset.z -= movementStep;
     }
     if (input.IsKeyDown(KeyA)) {
-        x -= movementStep;
+        offset.x -= movementStep;
     }
     if (input.IsKeyDown(KeyD)) {
-        x += movementStep;
+        offset.x += movementStep;
     }
     if (input.IsKeyDown(KeyJ)) {
-        y -= movementStep;
+        offset.y -= movementStep;
     }
     if (input.IsKeyDown(KeyK)) {
-        y += movementStep;
+        offset.y += movementStep;
     }
 
     if (input.IsKeyDown(KeyLeft)) {
@@ -71,12 +69,8 @@ static void UpdateCamera(float deltaTime, Platform* platform, Camera3D* camera, 
         roll -= angleStep;
     }
 
-    render.RotateCamera3D(camera, yaw, pitch, roll);
-
-    // simplified movement for testing, not correct relative to rotation
-    camera->position.x += x;
-    camera->position.y += y;
-    camera->position.z += z;
+    render.RotateCameraFirstPerson(camera, yaw, pitch, roll);
+    render.MoveCameraFirstPerson(camera, offset);
 }
 
 static void DrawTriangles(GameState* gameState, Platform* platform) {

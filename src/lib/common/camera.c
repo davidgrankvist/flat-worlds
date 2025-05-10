@@ -63,7 +63,7 @@ Camera3D GetDefaultCamera3D() {
     return camera;
 }
 
-void RotateCamera3D(Camera3D* camera, float yaw, float pitch, float roll) {
+void RotateCameraFirstPerson(Camera3D* camera, float yaw, float pitch, float roll) {
     // yaw - rotate forward about the initial up
     Vec3 forward = Vec3Sub(camera->target, camera->position);
     Vec3 forwardYaw = Vec3RotateAboutAxis(forward, camera->up, yaw); 
@@ -81,4 +81,20 @@ void RotateCamera3D(Camera3D* camera, float yaw, float pitch, float roll) {
 
     camera->target = target;
     camera->up = upRoll;
+}
+
+void MoveCameraFirstPerson(Camera3D* camera, Vec3 relativeOffset) {
+    // camera axes
+    Vec3 forwardN = Vec3Normalize(Vec3Sub(camera->target, camera->position));
+    Vec3 upN = camera->up;
+    Vec3 rightN = Vec3Normalize(Vec3Cross(upN, forwardN));
+
+    // offset along the axes
+    Vec3 offsetRight = Vec3Scale(rightN, relativeOffset.x);
+    Vec3 offsetUp = Vec3Scale(upN, relativeOffset.y);
+    Vec3 offsetForward = Vec3Scale(forwardN, relativeOffset.z);
+    Vec3 actualOffset = Vec3Add(Vec3Add(offsetRight, offsetUp), offsetForward);
+
+    camera->position = Vec3Add(camera->position, actualOffset);
+    camera->target = Vec3Add(camera->target, actualOffset);
 }
