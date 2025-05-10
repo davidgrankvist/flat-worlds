@@ -1,10 +1,10 @@
 #include "game_update.h"
 
-static void UpdateCamera(float deltaTime, Platform* platform, Camera3D* camera3D, Camera3D startingCamera);
+static void UpdateCamera(float deltaTime, GameState* gameState, Platform* platform);
 static void DrawTriangles(GameState* gameState, Platform* platform);
 
 void GameUpdate(float deltaTime, GameState* gameState, Platform* platform) {
-    UpdateCamera(deltaTime, platform, &gameState->camera, gameState->startingCamera);
+    UpdateCamera(deltaTime, gameState, platform);
     DrawTriangles(gameState, platform);
 }
 
@@ -16,9 +16,10 @@ static Color blue = { 0, 0, 1, 1 };
 static float movementSpeed = 400;
 static float rotationSpeed = 1;
 
-static void UpdateCamera(float deltaTime, Platform* platform, Camera3D* camera, Camera3D startingCamera) {
+static void UpdateCamera(float deltaTime, GameState* gameState, Platform* platform) {
     Input input = platform->input;
     Render render = platform->render;
+    Camera3D* camera = &gameState->camera;
 
     float movementStep = movementSpeed * deltaTime;
     Vec3 offset = {0};
@@ -29,7 +30,7 @@ static void UpdateCamera(float deltaTime, Platform* platform, Camera3D* camera, 
     float roll = 0;
 
     if (input.IsKeyPressed(KeyR)) {
-        *camera = startingCamera;
+        gameState->camera = gameState->startingCamera;
     }
     if (input.IsKeyDown(KeyW)) {
         offset.z += movementStep;
@@ -69,8 +70,19 @@ static void UpdateCamera(float deltaTime, Platform* platform, Camera3D* camera, 
         roll -= angleStep;
     }
 
-    render.RotateCameraFirstPerson(camera, yaw, pitch, roll);
-    render.MoveCameraFirstPerson(camera, offset);
+    if (input.IsKeyPressed(KeyO)) {
+        gameState->orbitMode = !gameState->orbitMode;
+    }
+
+    if (gameState->orbitMode) {
+        float azimuth = -yaw;
+        float elevation = pitch;
+        render.OrbitCameraAboutTarget(camera, azimuth, elevation);
+        render.MoveCameraTowardsTarget(camera, offset.z);
+    } else {
+        render.RotateCameraFirstPerson(camera, yaw, pitch, roll);
+        render.MoveCameraFirstPerson(camera, offset);
+    }
 }
 
 static void DrawTriangles(GameState* gameState, Platform* platform) {

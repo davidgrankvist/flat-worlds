@@ -64,7 +64,7 @@ Camera3D GetDefaultCamera3D() {
 }
 
 void RotateCameraFirstPerson(Camera3D* camera, float yaw, float pitch, float roll) {
-    // yaw - rotate forward about the initial up
+    // yaw - rotate the forward vector about the initial up
     Vec3 forward = Vec3Sub(camera->target, camera->position);
     Vec3 forwardYaw = Vec3RotateAboutAxis(forward, camera->up, yaw); 
 
@@ -83,7 +83,7 @@ void RotateCameraFirstPerson(Camera3D* camera, float yaw, float pitch, float rol
     camera->up = upRoll;
 }
 
-void MoveCameraFirstPerson(Camera3D* camera, Vec3 relativeOffset) {
+static Vec3 CalculateFirstPersonMoveOffset(Camera3D* camera, Vec3 relativeOffset) {
     // camera axes
     Vec3 forwardN = Vec3Normalize(Vec3Sub(camera->target, camera->position));
     Vec3 upN = camera->up;
@@ -95,6 +95,35 @@ void MoveCameraFirstPerson(Camera3D* camera, Vec3 relativeOffset) {
     Vec3 offsetForward = Vec3Scale(forwardN, relativeOffset.z);
     Vec3 actualOffset = Vec3Add(Vec3Add(offsetRight, offsetUp), offsetForward);
 
+    return actualOffset;
+}
+
+void MoveCameraFirstPerson(Camera3D* camera, Vec3 relativeOffset) {
+    Vec3 actualOffset = CalculateFirstPersonMoveOffset(camera, relativeOffset);
+
     camera->position = Vec3Add(camera->position, actualOffset);
     camera->target = Vec3Add(camera->target, actualOffset);
+}
+
+void OrbitCameraAboutTarget(Camera3D* camera, float azimuth, float elevation) {
+    // azimuth - rotate the backward vector about the initial up
+    Vec3 backward = Vec3Sub(camera->position, camera->target);
+    Vec3 backwardAzimuth = Vec3RotateAboutAxis(backward, camera->up, azimuth);
+
+    // elevation - rotate the new backward about the new right
+    Vec3 right = Vec3Normalize(Vec3Cross(camera->up, backwardAzimuth));
+    Vec3 backwardElevation = Vec3RotateAboutAxis(backwardAzimuth, right, elevation);
+    Vec3 up = Vec3Normalize(Vec3Cross(backwardElevation, right));
+
+    Vec3 position = Vec3Add(backwardElevation, camera->target);
+
+    camera->position = position;
+    camera->up = up;
+}
+
+void MoveCameraTowardsTarget(Camera3D* camera, float distanceOffset) {
+    Vec3 relativeOffset = {0, 0, distanceOffset};
+    Vec3 actualOffset = CalculateFirstPersonMoveOffset(camera, relativeOffset);
+
+    camera->position = Vec3Add(camera->position, actualOffset);
 }

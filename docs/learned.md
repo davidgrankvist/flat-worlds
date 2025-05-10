@@ -107,9 +107,14 @@ The camera system takes some parameters and outputs a transformation matrix that
 In 2D the camera transform defines a viewport, scaling and rotation. The viewport is the final step and can be computed with orthographic projection with
 placeholder near/far planes (as Z is ignored).
 
-In 3D the camera has a position and a target it looks towards (as well as some other parameters). There are two major steps in the transform.
+In 3D the camera has a position, a target it looks towards and an upwards direction (as well as some other parameters to define a frustum). There are two major steps in the transform.
 First coordinates need to be moved so that the camera position is the origin (view transform). Then the coordinates need to transformed
 to take into account the frustum. If you want a perspective effect, use perspective projection. If not, use orthographic projection.
+
+A 3D camera can have different kinds of movements and rotation, for example first person or orbiting around a target.
+These kinds of movements can be implemented by modifying the position/target/up vectors before doing the view transform.
+The game code can opt in to the position/target/up calculations that are relevant and after that the camera transform is calculated
+as usual.
 
 ## Hot reloading
 

@@ -6,6 +6,7 @@
 typedef struct {
     Camera3D camera;
     Camera3D startingCamera;
+    bool orbitMode;
 
     // -- Triangles --
 
