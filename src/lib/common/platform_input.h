@@ -1,12 +1,11 @@
 /*
- * Internal input related utilities to modify the input state.
+ * Platform setup - input
  *
- * The platform specific code is responsible for mapping key codes
- * and updating input buffers at the right time.
+ * Update input buffers to support the public functions IsKeyDown etc.
  */
 
-#ifndef input_h
-#define input_h
+#ifndef platform_input_h
+#define platform_input_h
 
 #include "libgame.h"
 

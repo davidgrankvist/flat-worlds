@@ -1,6 +1,10 @@
 /*
- * This file is the library entrypoint when targeting win32. It sets up function pointers
- * for the Platform struct that's used in the game code.
+ * Platform - Win32
+ *
+ * This file is responsible for:
+ * 1. initializing things for lib/common
+ * 2. responding to events (input etc.)
+ * 3. setting up public function pointers for libgame.h
  *
  * The WinMain is defined in libgame_platform_main.h and is not included in the library build.
  */
@@ -18,10 +22,9 @@
 #include <gl/wglext.h>
 
 #include "libgame.h"
-#include "input.h"
-#include "timing.h"
+#include "platform_input.h"
+#include "platform_timing.h"
 #include "asserts.h"
-#include "camera.h"
 
 // -- Forward declarations (public API) --
 

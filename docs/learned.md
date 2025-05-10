@@ -9,14 +9,12 @@ Things I've learned.
 Some platforms require a specific main function, like WinMain on Windows. To deal with this,
 you can structure the code like this:
 
-1. have a platform-specific main like `win32_main.c`
+1. have a platform-specific main
 2. set up function pointers that invoke platform specific code
-3. pass in the pointers into a GameMain that runs the game code
+3. make the function pointers accessible from the game code entrypoint
 
 This way the platform owns the real entrypoint, but the game code is still able to call
-platform APIs.
-
-Instead of having a custom named GameMain, it is possible to define a "fake main" that makes it appear
+platform APIs. It is possible to define a "fake main" that makes it appear
 as the game code is using the regular main. Under the hood, the WinMain can then invoke this main.
 
 ### Input

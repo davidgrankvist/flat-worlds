@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include "platform_opengl_render.h"
 #include "opengl_render.h"
 #include "libgame_math.h"
 #include "camera.h"

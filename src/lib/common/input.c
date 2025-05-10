@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include "libgame.h"
-#include "input.h"
+#include "platform_input.h"
 
 // helpers to toggle 1-bit key/button states
 #define KEY_TO_BIT(k) (1ULL << k)

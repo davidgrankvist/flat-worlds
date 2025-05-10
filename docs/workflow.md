@@ -9,3 +9,8 @@ More concretely:
 - cl.exe for compiling
 - Visual Studio for debugging
 - RenderDoc for debugging graphics
+
+## Neovim
+
+There is a local .nvimrc to set up different :make commands. This is to be able to selectively build what's currently relevant.
+For example, if you tune some game parameters, you may want :make to just rebuild the game update.
