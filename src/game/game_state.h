@@ -19,6 +19,11 @@ typedef struct {
     Quad quads[3];
 } GameState;
 
+/*
+ * Load both init and update dynamically, so that the game update code
+ * owns both updates and resets.
+ */
+typedef void (*InitGameStateFunc)(GameState* gameState);
 typedef void (*GameUpdateFunc)(float deltaTime, GameState* gameState, Platform* platform);
 
 #endif

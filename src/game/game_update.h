@@ -4,6 +4,7 @@
 #include "game_state.h"
 
 LIBGAME_EXPORT void GameUpdate(float deltaTime, GameState* gameState, Platform* platform);
+LIBGAME_EXPORT void InitGameState(GameState* gameState);
 
 #endif
 
