@@ -13,7 +13,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-
 // -- Set up platform specifics --
 
 #include "libgame_platform.h"
@@ -123,8 +122,17 @@ typedef struct {
     float aspectRatio; // set to 0 to use the entire client area
 } Camera3D;
 
+#define LIBGAME_DEFAULT_MAX_VERTICES 10000;
+#define LIBGAME_DEFAULT_MAX_INDICES 10000;
+
+typedef struct {
+    int maxVertices;
+    int maxVertexIndices;
+} RenderSettings;
+
 // see libgame_math.h details about coordinate systems
 typedef struct {
+    void (*Configure)(RenderSettings settings);
     void (*ClearScreen)(Color color);
     /*
      * Issues a draw call with all of the pending graphics.

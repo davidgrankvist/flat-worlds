@@ -16,6 +16,7 @@ void EndDrawGl(); // call before swapping buffers
 void SetResolutionGl(int width, int height); // call at window resize
 
 // render API
+void ConfigureRenderGl(RenderSettings settings);
 void ClearScreenGl(Color color);
 void SetTransformGl(Mat4 mat);
 void EndFrameGl();

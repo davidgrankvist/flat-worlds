@@ -106,6 +106,7 @@ static Platform InitPlatformWin32() {
     platform.input = input;
 
     Render render = {};
+    render.Configure = ConfigureRenderGl;
     render.MakeDrawCall = MakeDrawCallGl;
     render.ClearScreen = ClearScreenGl;
     render.DrawTriangle2D = DrawTriangle2DGl;

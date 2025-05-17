@@ -1,3 +1,26 @@
+/*
+ * The rendering backend has the following structure.
+ *
+ * BUFFERS
+ *
+ * Draw calls are batched using one big buffer of triangle vertices.
+ * There is an additional vertex index buffer to avoid redundant
+ * vertex data (for example when drawing quads).
+ *
+ * The two buffers are allocated ahead of time, with configurable sizes.
+ *
+ * The vertex count resets each frame. When a draw call is invoked,
+ * the range of vertices specified by currentVertexCount and currentVertexStart
+ * are included in the draw call. The vertex indices are handled similarly.
+ * The start offsets are also reset at the end of the frame.
+ *
+ * SHADERS
+ *
+ * The default shader program does following:
+ * - apply a user defined transform (defaults to the identity matrix)
+ * - apply a camera transform (either 2D or 3D)
+ * - pass through the given position and color
+ */
 #include <stdlib.h>
 #include "platform_opengl_render.h"
 #include "opengl_render.h"
@@ -10,32 +33,19 @@ static OpenGlExt openGlExt;
 static int clientWidth = 0;
 static int clientHeight = 0;
 
-/*
- * For simplicity, there is just one big buffer of triangle vertices.
- *
- * The vertex count resets each frame. When a draw call is invoked, 
- * the range of vertices specified by currentVertexCount and currentVertexStart 
- * are included in the draw call.
- */
 static GLuint VAO, VBO;
 static GLfloat* vertices = NULL;
-static int maxVertices = 1000; // constant size for now
+static int maxVertices = LIBGAME_DEFAULT_MAX_VERTICES;
 static int valuesPerVertex = 7; // 3 coordinates + 4 color channels
-static int currentVertexCount = 0; // total vertex count in frame
-static int currentVertexStart = 0; // start index for individual draw calls
+static int currentVertexCount = 0;
+static int currentVertexStart = 0;
 
 static GLuint EBO;
 static GLuint* vertexIndices = NULL;
-static int maxVertexIndices = 1000;
+static int maxVertexIndices = LIBGAME_DEFAULT_MAX_INDICES;
 static int currentVertexIndexCount = 0;
 static int currentVertexIndexStart = 0;
 
-/*
- * The default shader program does following:
- * - apply a user defined transform (defaults to the identity matrix)
- * - apply a camera transform (either 2D or 3D)
- * - pass through the given position and color
- */
 static const char* defaultVertexShaderSrc = "#version 330 core\n"
     "layout(location = 0) in vec3 position;\n"
     "layout(location = 1) in vec4 color;\n"
@@ -103,6 +113,14 @@ static void AssertNoGlErrorFn(char* msg, int line) {
 
 #define AssertNoGlError(msg) \
     AssertNoGlErrorFn(msg, __LINE__)
+
+void ConfigureRenderGl(RenderSettings settings) {
+    Assert(vertices == NULL, "Unable to configure max vertices. "
+            "The vertex buffer has already been initialized. "
+            "This can happen if you have already created a window.");
+    maxVertices = settings.maxVertices;
+    maxVertexIndices = settings.maxVertexIndices;
+}
 
 void SetResolutionGl(int width, int height) {
     glViewport(0, 0, width, height);
