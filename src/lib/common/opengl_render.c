@@ -6,7 +6,7 @@
 #include "asserts.h"
 
 // provided by platform layer
-OpenGlExt openGlExt;
+static OpenGlExt openGlExt;
 static int clientWidth = 0;
 static int clientHeight = 0;
 
@@ -17,12 +17,18 @@ static int clientHeight = 0;
  * the range of vertices specified by currentVertexCount and currentVertexStart 
  * are included in the draw call.
  */
-GLuint VAO, VBO;
-GLfloat* vertices = NULL;
-int maxVertices = 1000; // constant size for now
-int valuesPerVertex = 7; // 3 coordinates + 4 color channels
-int currentVertexCount = 0; // total vertex count in frame
-int currentVertexStart = 0; // start index for individual draw calls
+static GLuint VAO, VBO;
+static GLfloat* vertices = NULL;
+static int maxVertices = 1000; // constant size for now
+static int valuesPerVertex = 7; // 3 coordinates + 4 color channels
+static int currentVertexCount = 0; // total vertex count in frame
+static int currentVertexStart = 0; // start index for individual draw calls
+
+static GLuint EBO;
+static GLuint* vertexIndices = NULL;
+static int maxVertexIndices = 1000;
+static int currentVertexIndexCount = 0;
+static int currentVertexIndexStart = 0;
 
 /*
  * The default shader program does following:
@@ -30,7 +36,7 @@ int currentVertexStart = 0; // start index for individual draw calls
  * - apply a camera transform (either 2D or 3D)
  * - pass through the given position and color
  */
-const char* defaultVertexShaderSrc = "#version 330 core\n"
+static const char* defaultVertexShaderSrc = "#version 330 core\n"
     "layout(location = 0) in vec3 position;\n"
     "layout(location = 1) in vec4 color;\n"
     "uniform mat4 cameraTransform;\n"
@@ -41,30 +47,62 @@ const char* defaultVertexShaderSrc = "#version 330 core\n"
     "    fragColor = color;\n"
     "}";
 
-const char* defaultFragmentShaderSrc = "#version 330 core\n"
+static const char* defaultFragmentShaderSrc = "#version 330 core\n"
     "in vec4 fragColor;\n"
     "out vec4 FragColor;\n"
     "void main() {\n"
     "    FragColor = fragColor;\n"
     "}";
-GLuint defaultShaderProgram;
-GLint cameraTransformLoc;
-GLint transformLoc;
+static GLuint defaultShaderProgram;
+static GLint cameraTransformLoc;
+static GLint transformLoc;
 
 // OpenGL friendly flattened 4x4 matrix
 typedef struct {
     float m[16]; 
 } RenderTransform;
-RenderTransform defaultTransform = {0};
+static RenderTransform defaultTransform = {0};
 
 static RenderTransform Mat4ToRenderTransform(Mat4 mat);
 static void ResetTransform();
 static void UpdateCameraTransform();
 
-static void AssertNoGlError() {
-    GLenum err = glGetError();
-    Assert(err == GL_NO_ERROR, "OpenGL error. glGetError returned code %x", err);
+static const char* MapOpenGlError(GLenum err) {
+    switch(err) {
+        case GL_INVALID_ENUM:
+            return "GL_INVALID_ENUM";
+        case GL_INVALID_VALUE:
+            return "GL_INVALID_VALUE";
+        case GL_INVALID_OPERATION:
+            return "GL_INVALID_OPERATION";
+        case GL_STACK_OVERFLOW:
+            return "GL_STACK_OVERFLOW";
+        case GL_STACK_UNDERFLOW:
+            return "GL_STACK_UNDERFLOW";
+        case GL_OUT_OF_MEMORY:
+            return "GL_OUT_OF_MEMORY";
+        case GL_INVALID_FRAMEBUFFER_OPERATION:
+            return "GL_INVALID_FRAMEBUFFER_OPERATION";
+        case GL_CONTEXT_LOST:
+            return "GL_CONTEXT_LOST";
+        case GL_TABLE_TOO_LARGE:
+            return "GL_TABLE_TOO_LARGE";
+        default:
+            return "Unknown";
+    }
 }
+
+static void AssertNoGlErrorFn(char* msg, int line) {
+    GLenum err = glGetError();
+    if (err == GL_NO_ERROR) {
+        return;
+    }
+    const char* errStr = MapOpenGlError(err);
+    AssertFn(false, __FILE__, line, "%s: OpenGL error. glGetError returned code %s (0x%.4x)", msg, errStr, err);
+}
+
+#define AssertNoGlError(msg) \
+    AssertNoGlErrorFn(msg, __LINE__)
 
 void SetResolutionGl(int width, int height) {
     glViewport(0, 0, width, height);
@@ -113,6 +151,8 @@ void InitGraphicsGl(OpenGlExt ext) {
     // -- Vertex buffer for triangles --
 
     openGlExt.glGenVertexArrays(1, &VAO);
+
+    // VBO
     openGlExt.glGenBuffers(1, &VBO);
     openGlExt.glBindVertexArray(VAO);
     openGlExt.glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -123,6 +163,15 @@ void InitGraphicsGl(OpenGlExt ext) {
 
     openGlExt.glBufferData(GL_ARRAY_BUFFER, maxVertexBufferSize, vertices, GL_DYNAMIC_DRAW);
 
+    // EBO
+    openGlExt.glGenBuffers(1, &EBO);
+    openGlExt.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    int maxVertexIndexBufferSize = maxVertexIndices * sizeof(GLuint);
+    vertexIndices = (GLuint*)malloc(maxVertexIndexBufferSize);
+    Assert(vertexIndices != NULL, "Failed to allocate vertex index buffer");
+
+    openGlExt.glBufferData(GL_ELEMENT_ARRAY_BUFFER, maxVertexIndexBufferSize, vertexIndices, GL_DYNAMIC_DRAW);
+
     // position attribute
     openGlExt.glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, valuesPerVertex * sizeof(GLfloat), (GLvoid*)0);
     openGlExt.glEnableVertexAttribArray(0);
@@ -132,7 +181,7 @@ void InitGraphicsGl(OpenGlExt ext) {
 
     glEnable(GL_DEPTH_TEST);
 
-    AssertNoGlError();
+    AssertNoGlError("Failed to initialize OpenGL");
 }
 
 static inline int Mat4PosToIndex(int x, int y) {
@@ -176,21 +225,31 @@ static void UpdateCameraTransform() {
 }
 
 void EndDrawGl() {
+    //  update vertices
     int length = currentVertexCount - currentVertexStart;
     int offset = currentVertexStart * valuesPerVertex * sizeof(GLfloat);
     int size = length * valuesPerVertex * sizeof(GLfloat);
-
     openGlExt.glBufferSubData(GL_ARRAY_BUFFER, offset, size, &vertices[currentVertexStart * valuesPerVertex]);
-    glDrawArrays(GL_TRIANGLES, currentVertexStart, length);
 
-    AssertNoGlError();
+    // update indicies
+    int indexLength = currentVertexIndexCount - currentVertexIndexStart;
+    int indexOffset = currentVertexIndexStart * sizeof(GLuint);
+    int indexSize = indexLength * sizeof(GLuint);
+    openGlExt.glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, indexOffset, indexSize, &vertexIndices[currentVertexIndexStart]);
+
+    glDrawElements(GL_TRIANGLES, indexLength, GL_UNSIGNED_INT, (void*)(uintptr_t)currentVertexIndexStart);
+
+    AssertNoGlError("Failed to draw");
     ResetTransform();
     currentVertexStart = currentVertexCount;
+    currentVertexIndexStart = currentVertexIndexCount;
 }
 
 void EndFrameGl() {
     currentVertexCount = 0;
     currentVertexStart = 0;
+    currentVertexIndexCount = 0;
+    currentVertexIndexStart = 0;
 }
 
 void ClearScreenGl(Color color) {
@@ -200,17 +259,26 @@ void ClearScreenGl(Color color) {
 
 void DrawTriangle3DGl(Vec3 a, Vec3 b, Vec3 c, Color color) {
     int targetVertexCount = currentVertexCount + 3;
-    Assert(targetVertexCount <= maxVertices, "Too many vertices (%d). Fix this by increasing the max vertices or by adding automatic resizing.", targetVertexCount);
+    int targetVertexIndexCount = currentVertexIndexCount + 3;
+    Assert(targetVertexCount <= maxVertices, "Too many vertices (%d). Max is %d.", targetVertexCount, maxVertices);
+    Assert(targetVertexIndexCount <= maxVertexIndices, "Too many vertex indices (%d). Max is %d.", targetVertexIndexCount, maxVertexIndices);
 
     GLfloat verticesToAdd[] = {
         a.x, a.y, a.z, color.r, color.g, color.b, color.a,
         b.x, b.y, b.z, color.r, color.g, color.b, color.a,
         c.x, c.y, c.z, color.r, color.g, color.b, color.a
     };
+    GLuint vertexIndicesToAdd[] = {
+        currentVertexIndexCount,
+        currentVertexIndexCount + 1,
+        currentVertexIndexCount + 2,
+    };
 
     memcpy(&vertices[currentVertexCount * valuesPerVertex], verticesToAdd, sizeof(verticesToAdd));
+    memcpy(&vertexIndices[currentVertexIndexCount], vertexIndicesToAdd, sizeof(vertexIndicesToAdd));
 
     currentVertexCount += 3;
+    currentVertexIndexCount += 3;
 }
 
 void DrawTriangle2DGl(Vec2 a, Vec2 b, Vec2 c, Color color) {
