@@ -36,10 +36,6 @@ int main(int argc, char** argv) {
         input.ProcessInput();
         SleepUntilNextFrame();
 
-        if (IsKeyPressed(KeyEsc)) {
-            window.CloseCurrentWindow();
-        }
-
         uint64_t ellapsed = GetTicks() - ticks;
         float deltaTime = TICKS_TO_SECONDS(ellapsed);
 

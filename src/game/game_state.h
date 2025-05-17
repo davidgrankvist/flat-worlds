@@ -11,12 +11,41 @@ typedef struct {
     Color color;
 } Quad;
 
+#define MAX_PLANES 100
+
+typedef enum {
+    /*
+     * Look around with mouse.
+     * Move freely.
+     */
+    CameraFirstPerson,
+    /*
+     * Orbit around target.
+     * Zoom in/out.
+     */
+    CameraOrbit,
+    /*
+     * Turn and zoom towards target.
+     * Cycle through targets.
+     */
+    CameraFocus,
+} CameraMode;
+
 typedef struct {
     Camera3D camera;
     Camera3D startingCamera;
-    bool orbitMode;
+    CameraMode cameraMode;
 
-    Quad quads[3];
+    Quad planeQuads[MAX_PLANES];
+    int planeCount;
+
+    // camera focus animation
+    int focusedPlane;
+    Vec3 focusTargetStart;
+    Vec3 focusTarget;
+    Vec3 focusPositionStart;
+    Vec3 focusPosition;
+    float focusLerpT;
 } GameState;
 
 /*

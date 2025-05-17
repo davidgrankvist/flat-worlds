@@ -7,6 +7,28 @@ static Vec4 Vec3ToVec4(Vec3 vec);
 static Vec2 Vec4ToVec2(Vec4 vec);
 static Vec3 Vec4ToVec3(Vec4 vec);
 
+float FloatEquals(float a, float b) {
+    return fabs(a - b) < EPSILON;
+}
+
+float Clamp(float a, float mi, float ma) {
+    return fmin(fmax(a, mi), ma);
+}
+
+float Lerp(float a, float b, float t) {
+    return a + (b - a) * t;
+}
+
+Vec2 Vec2Lerp(Vec2 a, Vec2 b, float t) {
+    Vec2 lerped = { Lerp(a.x, b.x, t), Lerp(a.y, b.y, t) };
+    return lerped;
+}
+
+Vec3 Vec3Lerp(Vec3 a, Vec3 b, float t) {
+    Vec3 lerped = { Lerp(a.x, b.x, t), Lerp(a.y, b.y, t), Lerp(a.z, b.z, t) };
+    return lerped;
+}
+
 Mat4 Mat4Identity() {
     Mat4 transform =
     {{

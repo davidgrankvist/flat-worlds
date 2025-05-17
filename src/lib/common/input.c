@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include "libgame.h"
 #include "platform_input.h"
+#include "asserts.h"
 
 // helpers to toggle 1-bit key/button states
 #define KEY_TO_BIT(k) (1ULL << k)
@@ -14,13 +15,20 @@ typedef struct {
     // mouse
     int mouseX;
     int mouseY;
+    int mousePrevX;
+    int mousePrevY;
     uint8_t inputMouseButtons[2];
 } InputState;
 InputState inputState = {};
 
 void UpdateInputBuffers() {
+    Assert(KeyUnknown <= 64, "Too many key codes to fit in a u64. Please update the input data structure.");
+    Assert(MouseUnknown <= 8, "Too many mouse key codes to fit in a u8. Please update the input data structure.");
+
     inputState.inputKeys[1] = inputState.inputKeys[0];
     inputState.inputMouseButtons[1] = inputState.inputMouseButtons[0];
+    inputState.mousePrevX = inputState.mouseX;
+    inputState.mousePrevY = inputState.mouseY;
 }
 
 void SetKeyDown(InputKey key) {
@@ -80,3 +88,10 @@ int GetMouseInputY() {
     return inputState.mouseY;
 }
 
+int GetMouseInputDeltaX() {
+    return inputState.mouseX - inputState.mousePrevX;
+}
+
+int GetMouseInputDeltaY() {
+    return inputState.mouseY - inputState.mousePrevY;
+}

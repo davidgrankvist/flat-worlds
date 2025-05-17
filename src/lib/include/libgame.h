@@ -95,6 +95,8 @@ LIBGAME_EXPORT bool IsMouseReleased(InputMouseButton btn);
 // mouse position in screen coordinates
 LIBGAME_EXPORT int GetMouseInputX();
 LIBGAME_EXPORT int GetMouseInputY();
+LIBGAME_EXPORT int GetMouseInputDeltaX();
+LIBGAME_EXPORT int GetMouseInputDeltaY();
 
 // -- Graphics --
 

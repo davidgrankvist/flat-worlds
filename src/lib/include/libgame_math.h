@@ -19,10 +19,17 @@
 
 #include "libgame.h"
 
+#define EPSILON 0.000001f
 #define PI 3.14159265358979323846f
 #define DEGREES_TO_RADIANS (PI / 180.0f)
 #define RADIANS_TO_DEGREES (180.0f / PI)
 
+LIBGAME_EXPORT float FloatEquals(float a, float b); // based on epsilon
+
+LIBGAME_EXPORT float Clamp(float a, float mi, float ma);
+LIBGAME_EXPORT float Lerp(float a, float b, float t);
+LIBGAME_EXPORT Vec2 Vec2Lerp(Vec2 a, Vec2 b, float t);
+LIBGAME_EXPORT Vec3 Vec3Lerp(Vec3 a, Vec3 b, float t);
 
 LIBGAME_EXPORT Mat4 Mat4Identity();
 LIBGAME_EXPORT Mat4 Mat4Multiply(Mat4 first, Mat4 second);

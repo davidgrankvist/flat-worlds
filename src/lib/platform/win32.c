@@ -80,9 +80,6 @@ void InitMainWin32() {
     if (getenv("DEBUG_CONSOLE")) {
         InitConsole();
     }
-    Assert(KeyUnknown <= 64, "Too many key codes to fit in a u64. Please update the input data structure.");
-    Assert(MouseUnknown <= 8, "Too many mouse key codes to fit in a u8. Please update the input data structure.");
-
     windowHInstance = GetModuleHandle(NULL);
     windowNCmdShow = SW_SHOWDEFAULT;
 
