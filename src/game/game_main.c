@@ -55,32 +55,29 @@ static GameState InitGameState() {
 
     GameState gameState = {0};
 
-    /* In XY plane
-     *
-     *     c
-     *  a  b
-     */
-    gameState.aRef = (Vec3) { 0, 0, 0 };
-    gameState.bRef = (Vec3) { refSize, 0, 0.0f };
-    gameState.cRef = (Vec3) { refSize, refSize, 0.0f };
+    // In XY plane (right, up)
+    Quad quadXy;
+    quadXy.topLeft = (Vec3) { 0, refSize, 0.0f };
+    quadXy.topRight = (Vec3) { refSize, refSize, 0.0f };
+    quadXy.bottomLeft = (Vec3) { 0, 0, 0 };
+    quadXy.bottomRight = (Vec3) { refSize, 0, 0.0f };
+    gameState.quads[0] = quadXy;
 
-    /* In XY plane
-     *
-     *  b  a
-     *  c
-     */
-    gameState.aRef2 = (Vec3) { 0, 0, 0 };
-    gameState.bRef2 = (Vec3) { -refSize, 0, 0.0f };
-    gameState.cRef2 = (Vec3) { -refSize, -refSize, 0.0f };
+    // In XY plane (left, down)
+    Quad quadXy2;
+    quadXy2.topLeft = (Vec3) { -refSize, 0, 0.0f };
+    quadXy2.topRight = (Vec3) { 0, 0, 0 };
+    quadXy2.bottomLeft = (Vec3) { -refSize, -refSize, 0.0f };
+    quadXy2.bottomRight = (Vec3) { 0, -refSize, 0.0f };
+    gameState.quads[1] = quadXy2;
 
-    /* In XZ plane
-     *
-     * b  c
-     *    a
-     */
-    gameState.aRef3 = (Vec3) { 0, 0, 0 };
-    gameState.bRef3 = (Vec3) { -refSize, 0, refSize };
-    gameState.cRef3 = (Vec3) { 0, 0, refSize };
+    // In XZ plane (left, forward)
+    Quad quadXz;
+    quadXz.topLeft = (Vec3) { -refSize, 0, refSize };
+    quadXz.topRight = (Vec3) { 0, 0, refSize };
+    quadXz.bottomLeft = (Vec3) { -refSize, 0, 0 };
+    quadXz.bottomRight = (Vec3) { 0, 0, 0 };
+    gameState.quads[2] = quadXz;
 
     Camera3D camera3D = GetDefaultCamera3D();
     Camera3D startingCamera = camera3D;

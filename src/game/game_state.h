@@ -4,23 +4,19 @@
 #include "libgame.h"
 
 typedef struct {
+    Vec3 topLeft;
+    Vec3 topRight;
+    Vec3 bottomLeft;
+    Vec3 bottomRight;
+    Color color;
+} Quad;
+
+typedef struct {
     Camera3D camera;
     Camera3D startingCamera;
     bool orbitMode;
 
-    // -- Triangles --
-
-    Vec3 aRef;
-    Vec3 bRef;
-    Vec3 cRef;
-
-    Vec3 aRef2;
-    Vec3 bRef2;
-    Vec3 cRef2;
-
-    Vec3 aRef3;
-    Vec3 bRef3;
-    Vec3 cRef3;
+    Quad quads[3];
 } GameState;
 
 typedef void (*GameUpdateFunc)(float deltaTime, GameState* gameState, Platform* platform);

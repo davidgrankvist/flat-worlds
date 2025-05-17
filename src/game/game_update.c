@@ -1,11 +1,11 @@
 #include "game_update.h"
 
 static void UpdateCamera(float deltaTime, GameState* gameState);
-static void DrawTriangles(GameState* gameState, Platform* platform);
+static void DrawGraphics(GameState* gameState, Render* render);
 
 void GameUpdate(float deltaTime, GameState* gameState, Platform* platform) {
     UpdateCamera(deltaTime, gameState);
-    DrawTriangles(gameState, platform);
+    DrawGraphics(gameState, &platform->render);
 }
 
 static Color black = { 0, 0, 0, 1 };
@@ -83,16 +83,19 @@ static void UpdateCamera(float deltaTime, GameState* gameState) {
     }
 }
 
-static void DrawTriangles(GameState* gameState, Platform* platform) {
-    Render render = platform->render;
+static void DrawGraphics(GameState* gameState, Render* render) {
+    render->ClearScreen(black);
+    render->SetCamera3D(&gameState->camera);
 
-    render.ClearScreen(black);
+    gameState->quads[0].color = red;
+    gameState->quads[1].color = green;
+    gameState->quads[2].color = blue;
 
-    render.SetCamera3D(&gameState->camera);
-    render.DrawTriangle3D(gameState->aRef, gameState->bRef, gameState->cRef, green);
-    render.DrawTriangle3D(gameState->aRef2, gameState->bRef2, gameState->cRef2, blue);
-    render.DrawTriangle3D(gameState->aRef3, gameState->bRef3, gameState->cRef3, red);
+    for (int i = 0; i < 3; i++) {
+        Quad* quad = &gameState->quads[i];
+        render->DrawQuad3D(quad->topLeft, quad->topRight, quad->bottomLeft, quad->bottomRight, quad->color);
+    }
 
-    render.MakeDrawCall();
-    render.EndFrame();
+    render->MakeDrawCall();
+    render->EndFrame();
 }

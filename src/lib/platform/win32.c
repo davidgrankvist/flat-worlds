@@ -110,6 +110,7 @@ static Platform InitPlatformWin32() {
     render.ClearScreen = ClearScreenGl;
     render.DrawTriangle2D = DrawTriangle2DGl;
     render.DrawTriangle3D = DrawTriangle3DGl;
+    render.DrawQuad3D = DrawQuad3DGl;
     render.SetTransform = SetTransformGl;
     render.EndFrame = EndFrame;
     render.SetCamera2D = SetCamera2DGl;

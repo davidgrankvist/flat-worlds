@@ -135,10 +135,13 @@ typedef struct {
     void (*EndFrame)();
     // sets a custom transform to apply to all graphics in the next draw call
     void (*SetTransform)(Mat4 mat);
-    void (*DrawTriangle2D)(Vec2 a, Vec2 b, Vec2 c, Color color);
-    void (*DrawTriangle3D)(Vec3 a, Vec3 b, Vec3 c, Color color);
+    // set a camera to be active across draw calls
     void (*SetCamera2D)(Camera2D* camera);
     void (*SetCamera3D)(Camera3D* camera);
+    // shapes
+    void (*DrawTriangle2D)(Vec2 a, Vec2 b, Vec2 c, Color color);
+    void (*DrawTriangle3D)(Vec3 a, Vec3 b, Vec3 c, Color color);
+    void (*DrawQuad3D)(Vec3 topLeft, Vec3 topRight, Vec3 bottomLeft, Vec3 bottomRight, Color color);
 } Render;
 
 LIBGAME_EXPORT Camera3D GetDefaultCamera3D();

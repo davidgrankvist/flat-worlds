@@ -289,7 +289,7 @@ static void DrawMesh(Mesh mesh) {
     }
 
     for (int i = 0; i < mesh.indexCount; i++) {
-        vertexIndices[currentVertexIndexCount + i] = mesh.indices[i] + currentVertexIndexCount;
+        vertexIndices[currentVertexIndexCount + i] = mesh.indices[i] + currentVertexCount;
     }
 
     currentVertexCount = targetVertexCount;
@@ -301,16 +301,34 @@ void DrawTriangle3DGl(Vec3 a, Vec3 b, Vec3 c, Color color) {
     Color colors[3] = { color, color, color };
     int indices[3] = { 0, 1, 2 };
 
-    Mesh triangleMesh = {0};
-    triangleMesh.positions = positions;
-    triangleMesh.colors = colors;
-    triangleMesh.vertexCount = 3;
-    triangleMesh.indices = indices;
-    triangleMesh.indexCount = 3;
+    Mesh mesh = {0};
+    mesh.positions = positions;
+    mesh.colors = colors;
+    mesh.vertexCount = 3;
+    mesh.indices = indices;
+    mesh.indexCount = 3;
 
-    DrawMesh(triangleMesh);
+    DrawMesh(mesh);
 }
 
 void DrawTriangle2DGl(Vec2 a, Vec2 b, Vec2 c, Color color) {
     DrawTriangle3DGl((Vec3){ a.x, a.y, 0}, (Vec3){ b.x, b.y, 0}, (Vec3){ c.x, c.y, 0}, color);
+}
+
+void DrawQuad3DGl(Vec3 topLeft, Vec3 topRight, Vec3 bottomLeft, Vec3 bottomRight, Color color) {
+    Vec3 positions[4] = { topLeft, topRight, bottomLeft, bottomRight };
+    Color colors[4] = { color, color, color, color };
+    int indices[6] = {
+        0, 1, 2, // upper triangle
+        2, 1, 3, // lower triangle
+    };
+
+    Mesh mesh = {0};
+    mesh.positions = positions;
+    mesh.colors = colors;
+    mesh.vertexCount = 4;
+    mesh.indices = indices;
+    mesh.indexCount = 6;
+
+    DrawMesh(mesh);
 }
