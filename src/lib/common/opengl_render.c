@@ -255,30 +255,60 @@ void EndFrameGl() {
 void ClearScreenGl(Color color) {
     glClearColor(color.r, color.g, color.b, color.a);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
- }
+}
 
-void DrawTriangle3DGl(Vec3 a, Vec3 b, Vec3 c, Color color) {
-    int targetVertexCount = currentVertexCount + 3;
-    int targetVertexIndexCount = currentVertexIndexCount + 3;
+static void AssertCountWithinBounds(int targetVertexCount, int targetVertexIndexCount) {
     Assert(targetVertexCount <= maxVertices, "Too many vertices (%d). Max is %d.", targetVertexCount, maxVertices);
     Assert(targetVertexIndexCount <= maxVertexIndices, "Too many vertex indices (%d). Max is %d.", targetVertexIndexCount, maxVertexIndices);
+}
 
-    GLfloat verticesToAdd[] = {
-        a.x, a.y, a.z, color.r, color.g, color.b, color.a,
-        b.x, b.y, b.z, color.r, color.g, color.b, color.a,
-        c.x, c.y, c.z, color.r, color.g, color.b, color.a
-    };
-    GLuint vertexIndicesToAdd[] = {
-        currentVertexIndexCount,
-        currentVertexIndexCount + 1,
-        currentVertexIndexCount + 2,
-    };
+typedef struct {
+   Vec3* positions;
+   Color* colors;
+   int vertexCount;
+   int* indices;
+   int indexCount;
+} Mesh;
 
-    memcpy(&vertices[currentVertexCount * valuesPerVertex], verticesToAdd, sizeof(verticesToAdd));
-    memcpy(&vertexIndices[currentVertexIndexCount], vertexIndicesToAdd, sizeof(vertexIndicesToAdd));
+static void DrawMesh(Mesh mesh) {
+    int targetVertexCount = currentVertexCount + mesh.vertexCount;
+    int targetVertexIndexCount = currentVertexIndexCount + mesh.indexCount;
+    AssertCountWithinBounds(targetVertexCount, targetVertexIndexCount);
 
-    currentVertexCount += 3;
-    currentVertexIndexCount += 3;
+    for (int i = 0; i < mesh.vertexCount; i++) {
+        Vec3 pos = mesh.positions[i];
+        Color color = mesh.colors[i];
+        int iBuffer = (currentVertexCount + i) * valuesPerVertex;
+        vertices[iBuffer] = pos.x;
+        vertices[iBuffer + 1] = pos.y;
+        vertices[iBuffer + 2] = pos.z;
+        vertices[iBuffer + 3] = color.r;
+        vertices[iBuffer + 4] = color.g;
+        vertices[iBuffer + 5] = color.b;
+        vertices[iBuffer + 6] = color.a;
+    }
+
+    for (int i = 0; i < mesh.indexCount; i++) {
+        vertexIndices[currentVertexIndexCount + i] = mesh.indices[i] + currentVertexIndexCount;
+    }
+
+    currentVertexCount = targetVertexCount;
+    currentVertexIndexCount = targetVertexIndexCount;
+}
+
+void DrawTriangle3DGl(Vec3 a, Vec3 b, Vec3 c, Color color) {
+    Vec3 positions[3] = { a, b, c };
+    Color colors[3] = { color, color, color };
+    int indices[3] = { 0, 1, 2 };
+
+    Mesh triangleMesh = {0};
+    triangleMesh.positions = positions;
+    triangleMesh.colors = colors;
+    triangleMesh.vertexCount = 3;
+    triangleMesh.indices = indices;
+    triangleMesh.indexCount = 3;
+
+    DrawMesh(triangleMesh);
 }
 
 void DrawTriangle2DGl(Vec2 a, Vec2 b, Vec2 c, Color color) {
