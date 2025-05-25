@@ -20,7 +20,7 @@ int main(int argc, char** argv) {
     GameState gameState = {0};
     initGameStateFn(&gameState);
 
-    window.InitWindow();
+    window.InitWindow("Flat Worlds");
 
     ResetFpsTimer();
     SetTargetFps(60);

@@ -17,6 +17,7 @@
 
 #include <timeapi.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "opengl_render.h"
 #include <gl/wglext.h>
@@ -44,7 +45,7 @@ Platform* GetPlatform();
 
 static Platform InitPlatformWin32();
 
-static void InitWindow();
+static void InitWindow(const char* title);
 static bool IsWindowOpen();
 static void CloseCurrentWindow();
 static int GetClientWidth();
@@ -116,8 +117,9 @@ static Platform InitPlatformWin32() {
 
 LRESULT CALLBACK WindProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 HGLRC InitOpenGl(HDC windowHdc);
+wchar_t* ConvertToWide(const char* input);
 
-static void InitWindow() {
+static void InitWindow(const char* windowTitle) {
     const wchar_t className[] = L"WindowClassName";
     WNDCLASS wc = {};
     wc.lpfnWndProc = WindProc;
@@ -128,7 +130,7 @@ static void InitWindow() {
     windowHwnd = CreateWindowEx(
             0,
             className,
-            L"Flat Worlds",
+            ConvertToWide(windowTitle),
             WS_OVERLAPPEDWINDOW,
             CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
             NULL,
@@ -148,6 +150,15 @@ static bool IsWindowOpen() {
 
 static void CloseCurrentWindow() {
     shouldRun = false;
+}
+
+wchar_t* ConvertToWide(const char* input) {
+    int size_needed = MultiByteToWideChar(CP_UTF8, 0, input, -1, NULL, 0);
+    wchar_t* wideStr = (wchar_t*)malloc(size_needed * sizeof(wchar_t));
+    if (!wideStr) return NULL;
+
+    MultiByteToWideChar(CP_UTF8, 0, input, -1, wideStr, size_needed);
+    return wideStr;
 }
 
 static void MapAndSetResolution(LPARAM lParam);

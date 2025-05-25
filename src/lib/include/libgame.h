@@ -159,7 +159,7 @@ LIBGAME_EXPORT void MoveCameraTowardsTarget(Camera3D* camera, float distanceOffs
 // -- Window --
 
 typedef struct {
-    void (*InitWindow)();
+    void (*InitWindow)(const char* title);
     bool (*IsWindowOpen)();
     void (*CloseCurrentWindow)();
     int (*GetClientWidth)();
