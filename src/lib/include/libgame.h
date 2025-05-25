@@ -130,27 +130,25 @@ typedef struct {
     int maxVertexIndices;
 } RenderSettings;
 
-// see libgame_math.h details about coordinate systems
-typedef struct {
-    void (*Configure)(RenderSettings settings);
-    void (*ClearScreen)(Color color);
-    /*
-     * Issues a draw call with all of the pending graphics.
-     * Resets the current custom transform. The camera transform is not reset.
-     */
-    void (*MakeDrawCall)();
-    // paints to the screen and resets internal rendering state
-    void (*EndFrame)();
-    // sets a custom transform to apply to all graphics in the next draw call
-    void (*SetTransform)(Mat4 mat);
-    // set a camera to be active across draw calls
-    void (*SetCamera2D)(Camera2D* camera);
-    void (*SetCamera3D)(Camera3D* camera);
-    // shapes
-    void (*DrawTriangle2D)(Vec2 a, Vec2 b, Vec2 c, Color color);
-    void (*DrawTriangle3D)(Vec3 a, Vec3 b, Vec3 c, Color color);
-    void (*DrawQuad3D)(Vec3 topLeft, Vec3 topRight, Vec3 bottomLeft, Vec3 bottomRight, Color color);
-} Render;
+// see libgame_math.h for details about coordinate system conventions
+
+LIBGAME_EXPORT void ConfigureRender(RenderSettings settings);
+LIBGAME_EXPORT void ClearScreen(Color color);
+/*
+ * Issues a draw call with all of the pending graphics.
+ * Resets the current custom transform. The camera transform is not reset.
+ */
+LIBGAME_EXPORT void MakeDrawCall();
+LIBGAME_EXPORT void EndFrame();
+// sets a custom transform to apply to all graphics in the next draw call
+LIBGAME_EXPORT void SetTransform(Mat4 mat);
+// set a camera to be active across draw calls
+LIBGAME_EXPORT void SetCamera2D(Camera2D* camera);
+LIBGAME_EXPORT void SetCamera3D(Camera3D* camera);
+// shapes
+LIBGAME_EXPORT void DrawTriangle2D(Vec2 a, Vec2 b, Vec2 c, Color color);
+LIBGAME_EXPORT void DrawTriangle3D(Vec3 a, Vec3 b, Vec3 c, Color color);
+LIBGAME_EXPORT void DrawQuad3D(Vec3 topLeft, Vec3 topRight, Vec3 bottomLeft, Vec3 bottomRight, Color color);
 
 LIBGAME_EXPORT Camera3D GetDefaultCamera3D();
 LIBGAME_EXPORT void RotateCameraFirstPerson(Camera3D* camera, float yaw, float pitch, float roll);
@@ -211,7 +209,6 @@ typedef struct {
 
 typedef struct {
     Window window;
-    Render render;
     LibraryLoader libLoader;
 } Platform;
 

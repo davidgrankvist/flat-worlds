@@ -61,12 +61,12 @@ void InitGameState(GameState* gameState) {
 
 static void RunDevCommands(GameState* gameState, Platform* platform);
 static void UpdateCamera(float deltaTime, GameState* gameState);
-static void DrawGraphics(GameState* gameState, Render* render);
+static void DrawGraphics(GameState* gameState);
 
 void GameUpdate(float deltaTime, GameState* gameState, Platform* platform) {
     RunDevCommands(gameState, platform);
     UpdateCamera(deltaTime, gameState);
-    DrawGraphics(gameState, &platform->render);
+    DrawGraphics(gameState);
 }
 
 static void RunDevCommands(GameState* gameState, Platform* platform) {
@@ -252,16 +252,16 @@ static void UpdateCameraFocus(float deltaTime, GameState* gameState) {
     camera->position = currPosition;
 }
 
-static void DrawGraphics(GameState* gameState, Render* render) {
-    render->ClearScreen(black);
-    render->SetCamera3D(&gameState->camera);
+static void DrawGraphics(GameState* gameState) {
+    ClearScreen(black);
+    SetCamera3D(&gameState->camera);
 
     for (int i = 0; i < gameState->planeCount; i++) {
         Quad* quad = &gameState->planeQuads[i];
         Color color = gameState->cameraMode == CameraFocus && gameState->focusedPlane == i ? focusColor : quad->color;
-        render->DrawQuad3D(quad->topLeft, quad->topRight, quad->bottomLeft, quad->bottomRight, color);
+        DrawQuad3D(quad->topLeft, quad->topRight, quad->bottomLeft, quad->bottomRight, color);
     }
 
-    render->MakeDrawCall();
-    render->EndFrame();
+    MakeDrawCall();
+    EndFrame();
 }

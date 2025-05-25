@@ -20,6 +20,7 @@
 
 #include "opengl_render.h"
 #include <gl/wglext.h>
+#include "platform_render.h"
 
 #include "libgame.h"
 #include "input.h"
@@ -49,13 +50,11 @@ static void CloseCurrentWindow();
 static int GetClientWidth();
 static int GetClientHeight();
 static void InitConsole();
-static void SetTransform(Mat4 mat);
-static void EndFrame();
 
-static void InitPlatformInputWin32();
-
-static void MakeDrawCallGl();
+static void InitInputWin32();
+static void InitRenderGlWin32();
 static void InitTimingWin32();
+
 static void ResolvePath(char* name, FileExtensionType extension, char* out, int outSize);
 static bool LoadLibraryInternal(char* name, DynamicLibrary* lib);
 static void* LoadLibraryFunction(char* name, DynamicLibrary* lib);
@@ -100,21 +99,8 @@ static Platform InitPlatformWin32() {
     window.InitConsole = InitConsole;
     platform.window = window;
 
-    InitPlatformInputWin32();
-
-    Render render = {};
-    render.Configure = ConfigureRenderGl;
-    render.MakeDrawCall = MakeDrawCallGl;
-    render.ClearScreen = ClearScreenGl;
-    render.DrawTriangle2D = DrawTriangle2DGl;
-    render.DrawTriangle3D = DrawTriangle3DGl;
-    render.DrawQuad3D = DrawQuad3DGl;
-    render.SetTransform = SetTransformGl;
-    render.EndFrame = EndFrame;
-    render.SetCamera2D = SetCamera2DGl;
-    render.SetCamera3D = SetCamera3DGl;
-    platform.render = render;
-
+    InitInputWin32();
+    InitRenderGlWin32();
     InitTimingWin32();
 
     LibraryLoader libLoader = {};
@@ -436,7 +422,7 @@ static void WarpMousePositionWin32(int x, int y) {
     SetCursorPos(pt.x, pt.y);
 }
 
-static void InitPlatformInputWin32() {
+static void InitInputWin32() {
     PlatformInput platformInput = {};
     platformInput.ProcessInput = ProcessInputWin32;
     platformInput.WarpMousePosition = WarpMousePositionWin32;
@@ -449,9 +435,24 @@ static void MakeDrawCallGl() {
     EndDrawGl();
 }
 
-static void EndFrame() {
+static void EndFrameGlWin32() {
     EndFrameGl();
     SwapBuffers(windowHdc);
+}
+
+static void InitRenderGlWin32() {
+    PlatformRender render = {};
+    render.Configure = ConfigureRenderGl;
+    render.MakeDrawCall = MakeDrawCallGl;
+    render.ClearScreen = ClearScreenGl;
+    render.DrawTriangle2D = DrawTriangle2DGl;
+    render.DrawTriangle3D = DrawTriangle3DGl;
+    render.DrawQuad3D = DrawQuad3DGl;
+    render.SetTransform = SetTransformGl;
+    render.EndFrame = EndFrameGlWin32;
+    render.SetCamera2D = SetCamera2DGl;
+    render.SetCamera3D = SetCamera3DGl;
+    InitPlatformRender(render);
 }
 
 // -- Timing --
