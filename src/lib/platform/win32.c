@@ -22,7 +22,7 @@
 #include <gl/wglext.h>
 
 #include "libgame.h"
-#include "platform_input.h"
+#include "input.h"
 #include "platform_timing.h"
 #include "asserts.h"
 
