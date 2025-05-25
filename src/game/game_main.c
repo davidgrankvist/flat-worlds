@@ -5,7 +5,6 @@
 int main(int argc, char** argv) {
     Platform* platform = GetPlatform();
     Window window = platform->window;
-    Input input = platform->input;
     LibraryLoader libLoader = platform->libLoader;
 
     DynamicLibrary gameUpdateLib = {0};
@@ -33,7 +32,7 @@ int main(int argc, char** argv) {
             gameUpdateFn = (GameUpdateFunc)libLoader.LoadLibraryFunction("GameUpdate", &gameUpdateLib);
         }
 
-        input.ProcessInput();
+        ProcessInput();
         SleepUntilNextFrame();
 
         uint64_t ellapsed = GetTicks() - ticks;

@@ -66,7 +66,6 @@ static void DrawGraphics(GameState* gameState, Render* render);
 void GameUpdate(float deltaTime, GameState* gameState, Platform* platform) {
     RunDevCommands(gameState, platform);
     UpdateCamera(deltaTime, gameState);
-
     DrawGraphics(gameState, &platform->render);
 }
 
@@ -74,7 +73,7 @@ static void RunDevCommands(GameState* gameState, Platform* platform) {
     if (IsKeyPressed(KeyEsc)) {
         platform->window.CloseCurrentWindow();
     }
-    if (IsKeyDown(KeyLeftShift) && IsKeyDown(KeyR)) {
+    if (IsKeyDown(KeyLeftShift) && IsKeyPressed(KeyR)) {
         InitGameState(gameState);
     }
 }

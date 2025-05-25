@@ -7,6 +7,8 @@
 #define KEY_TO_BIT(k) (1ULL << k)
 #define IS_KEY_SET(k, input) (input & KEY_TO_BIT(k))
 
+PlatformInput platformInput = {};
+
 // current / previous key states are set with single bits (1 means down)
 typedef struct {
     // keys
@@ -21,12 +23,17 @@ typedef struct {
 } InputState;
 InputState inputState = {};
 
+void InitPlatformInput(PlatformInput plin) {
+    platformInput = plin;
+}
+
 void UpdateInputBuffers() {
     Assert(KeyUnknown <= 64, "Too many key codes to fit in a u64. Please update the input data structure.");
     Assert(MouseUnknown <= 8, "Too many mouse key codes to fit in a u8. Please update the input data structure.");
 
     inputState.inputKeys[1] = inputState.inputKeys[0];
     inputState.inputMouseButtons[1] = inputState.inputMouseButtons[0];
+
     inputState.mousePrevX = inputState.mouseX;
     inputState.mousePrevY = inputState.mouseY;
 }
@@ -94,4 +101,25 @@ int GetMouseInputDeltaX() {
 
 int GetMouseInputDeltaY() {
     return inputState.mouseY - inputState.mousePrevY;
+}
+
+static void SetMousePrevXyToCurrent() {
+    inputState.mousePrevX = inputState.mouseX;
+    inputState.mousePrevY = inputState.mouseY;
+}
+
+void SetMouseEnteredWindow() {
+    SetMousePrevXyToCurrent();
+}
+
+void ProcessInput() {
+    platformInput.ProcessInput();
+}
+
+void WarpMousePosition(int x, int y) {
+    platformInput.WarpMousePosition(x, y);
+    /*
+     * Don't update internal input state here as it can cause mid-frame confusion with deltas.
+     * Assume this triggers a mouse move event that is received next frame.
+     */
 }

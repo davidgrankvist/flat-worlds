@@ -76,11 +76,8 @@ typedef enum {
     MouseUnknown,
 } InputMouseButton;
 
-typedef struct {
-    // consume input and update key up/down states, etc.
-    void (*ProcessInput)();
-} Input;
-
+// consume input and update key up/down states, etc.
+LIBGAME_EXPORT void ProcessInput();
 /*
  * Down = currently held down
  * Pressed = changed from up to down
@@ -97,6 +94,7 @@ LIBGAME_EXPORT int GetMouseInputX();
 LIBGAME_EXPORT int GetMouseInputY();
 LIBGAME_EXPORT int GetMouseInputDeltaX();
 LIBGAME_EXPORT int GetMouseInputDeltaY();
+LIBGAME_EXPORT void WarpMousePosition(int x, int y);
 
 // -- Graphics --
 
@@ -213,7 +211,6 @@ typedef struct {
 
 typedef struct {
     Window window;
-    Input input;
     Render render;
     LibraryLoader libLoader;
 } Platform;

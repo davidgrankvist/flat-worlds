@@ -49,9 +49,10 @@ static void CloseCurrentWindow();
 static int GetClientWidth();
 static int GetClientHeight();
 static void InitConsole();
-static void ProcessInput();
 static void SetTransform(Mat4 mat);
 static void EndFrame();
+
+static void InitPlatformInputWin32();
 
 static void MakeDrawCallGl();
 static void InitTimingWin32();
@@ -65,6 +66,7 @@ HINSTANCE windowHInstance;
 int windowNCmdShow;
 MSG msg = {};
 bool shouldRun = true;
+HWND windowHwnd;
 HDC windowHdc;
 
 static int clientWidth = 0;
@@ -98,9 +100,7 @@ static Platform InitPlatformWin32() {
     window.InitConsole = InitConsole;
     platform.window = window;
 
-    Input input = {};
-    input.ProcessInput = ProcessInput;
-    platform.input = input;
+    InitPlatformInputWin32();
 
     Render render = {};
     render.Configure = ConfigureRenderGl;
@@ -139,7 +139,7 @@ static void InitWindow() {
     wc.lpszClassName = className;
     RegisterClass(&wc);
 
-    HWND hwnd = CreateWindowEx(
+    windowHwnd = CreateWindowEx(
             0,
             className,
             L"Flat Worlds",
@@ -150,10 +150,10 @@ static void InitWindow() {
             windowHInstance,
             NULL);
 
-    windowHdc = GetDC(hwnd);
+    windowHdc = GetDC(windowHwnd);
     HGLRC hglrc = InitOpenGl(windowHdc);
 
-    ShowWindow(hwnd, windowNCmdShow);
+    ShowWindow(windowHwnd, windowNCmdShow);
 }
 
 static bool IsWindowOpen() {
@@ -164,9 +164,10 @@ static void CloseCurrentWindow() {
     shouldRun = false;
 }
 
-void MapAndSetResolution(LPARAM lParam);
-InputKey MapKeyCode(WPARAM wParam, LPARAM lParam);
-void MapAndSetMousePosition(LPARAM lParam);
+static void MapAndSetResolution(LPARAM lParam);
+static InputKey MapKeyCode(WPARAM wParam, LPARAM lParam);
+static void OnMouseMove(HWND hwnd, LPARAM lParam);
+static void OnMouseLeave();
 
 // for reading lParam things
 #define EXTRACT_LOW16(n) (n & 0x0000FFFF);
@@ -209,7 +210,11 @@ static LRESULT CALLBACK WindProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
             SetMouseUp(MouseMiddle);
             return 0;
         case WM_MOUSEMOVE: {
-            MapAndSetMousePosition(lParam);
+            OnMouseMove(hwnd, lParam);
+            return 0;
+        }
+        case WM_MOUSELEAVE: {
+            OnMouseLeave();
             return 0;
         }
     }
@@ -329,7 +334,7 @@ void InitConsole() {
 
 // -- Input --
 
-static void ProcessInput() {
+static void ProcessInputWin32() {
     UpdateInputBuffers();
 
     while(PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
@@ -398,6 +403,44 @@ static void MapAndSetMousePosition(LPARAM lParam) {
     int y = EXTRACT_HIGH16(lParam);
 
     SetMousePosition(x, y);
+}
+
+static void TrackMouseLeave(HWND hwnd) {
+    TRACKMOUSEEVENT tme;
+    tme.cbSize = sizeof(TRACKMOUSEEVENT);
+    tme.dwFlags = TME_LEAVE;
+    tme.hwndTrack = hwnd;
+    tme.dwHoverTime = 0;
+    TrackMouseEvent(&tme);
+}
+
+static bool didMouseLeave = true;
+
+static void OnMouseMove(HWND hwnd, LPARAM lParam) {
+    TrackMouseLeave(hwnd);
+    MapAndSetMousePosition(lParam);
+
+    if (didMouseLeave) {
+        SetMouseEnteredWindow();
+        didMouseLeave = false;
+    }
+}
+
+static void OnMouseLeave() {
+    didMouseLeave = true;
+}
+
+static void WarpMousePositionWin32(int x, int y) {
+    POINT pt = { x, y };
+    ClientToScreen(windowHwnd, &pt);
+    SetCursorPos(pt.x, pt.y);
+}
+
+static void InitPlatformInputWin32() {
+    PlatformInput platformInput = {};
+    platformInput.ProcessInput = ProcessInputWin32;
+    platformInput.WarpMousePosition = WarpMousePositionWin32;
+    InitPlatformInput(platformInput);
 }
 
 // -- Render --
