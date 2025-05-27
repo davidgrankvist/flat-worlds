@@ -21,11 +21,13 @@
 
 #include "opengl_render.h"
 #include <gl/wglext.h>
+
 #include "platform_render.h"
+#include "platform_timing.h"
+#include "platform_window.h"
 
 #include "libgame.h"
 #include "input.h"
-#include "platform_timing.h"
 #include "asserts.h"
 
 // -- Forward declarations (public API) --
@@ -45,13 +47,7 @@ Platform* GetPlatform();
 
 static Platform InitPlatformWin32();
 
-static void InitWindow(const char* title);
-static bool IsWindowOpen();
-static void CloseCurrentWindow();
-static int GetClientWidth();
-static int GetClientHeight();
-static void InitConsole();
-
+static void InitPlatformWindowWin32();
 static void InitInputWin32();
 static void InitRenderGlWin32();
 static void InitTimingWin32();
@@ -65,12 +61,8 @@ static void* LoadLibraryFunction(char* name, DynamicLibrary* lib);
 HINSTANCE windowHInstance;
 int windowNCmdShow;
 MSG msg = {};
-bool shouldRun = true;
 HWND windowHwnd;
 HDC windowHdc;
-
-static int clientWidth = 0;
-static int clientHeight = 0;
 
 Platform win32Platform = {};
 
@@ -78,9 +70,11 @@ Platform* GetPlatform() {
     return &win32Platform;
 }
 
+static void InitConsoleWin32();
+
 void InitMainWin32() {
     if (getenv("DEBUG_CONSOLE")) {
-        InitConsole();
+        InitConsoleWin32();
     }
     windowHInstance = GetModuleHandle(NULL);
     windowNCmdShow = SW_SHOWDEFAULT;
@@ -91,15 +85,7 @@ void InitMainWin32() {
 static Platform InitPlatformWin32() {
     Platform platform = {};
 
-    Window window = {};
-    window.InitWindow = InitWindow;
-    window.IsWindowOpen = IsWindowOpen;
-    window.CloseCurrentWindow = CloseCurrentWindow;
-    window.GetClientWidth = GetClientWidth;
-    window.GetClientHeight = GetClientHeight;
-    window.InitConsole = InitConsole;
-    platform.window = window;
-
+    InitPlatformWindowWin32();
     InitInputWin32();
     InitRenderGlWin32();
     InitTimingWin32();
@@ -115,11 +101,20 @@ static Platform InitPlatformWin32() {
 
 // -- Window --
 
+static void InitWindowWin32(const char* windowTitle);
+
+static void InitPlatformWindowWin32() {
+    PlatformWindow platformWindow = {};
+    platformWindow.InitWindow = InitWindowWin32;
+    platformWindow.InitConsole = InitConsoleWin32;
+    InitPlatformWindow(platformWindow);
+}
+
 LRESULT CALLBACK WindProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 HGLRC InitOpenGl(HDC windowHdc);
 wchar_t* ConvertToWide(const char* input);
 
-static void InitWindow(const char* windowTitle) {
+static void InitWindowWin32(const char* windowTitle) {
     const wchar_t className[] = L"WindowClassName";
     WNDCLASS wc = {};
     wc.lpfnWndProc = WindProc;
@@ -142,14 +137,6 @@ static void InitWindow(const char* windowTitle) {
     HGLRC hglrc = InitOpenGl(windowHdc);
 
     ShowWindow(windowHwnd, windowNCmdShow);
-}
-
-static bool IsWindowOpen() {
-    return shouldRun;
-}
-
-static void CloseCurrentWindow() {
-    shouldRun = false;
 }
 
 wchar_t* ConvertToWide(const char* input) {
@@ -304,23 +291,16 @@ static HGLRC InitOpenGl(HDC windowHdc) {
 }
 
 static void MapAndSetResolution(LPARAM lParam) {
-    clientWidth = EXTRACT_LOW16(lParam);
-    clientHeight = EXTRACT_HIGH16(lParam);
+    int clientWidth = EXTRACT_LOW16(lParam);
+    int clientHeight = EXTRACT_HIGH16(lParam);
 
+    SetResolution(clientWidth, clientHeight);
     SetResolutionGl(clientWidth, clientHeight);
-}
-
-static int GetClientWidth() {
-    return clientWidth;
-}
-
-static int GetClientHeight() {
-    return clientHeight;
 }
 
 // -- Console --
 
-void InitConsole() {
+void InitConsoleWin32() {
     if (!AttachConsole(ATTACH_PARENT_PROCESS)) {
         AllocConsole();
     }
@@ -336,7 +316,7 @@ static void ProcessInputWin32() {
 
     while(PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
         if (msg.message == WM_QUIT) {
-            shouldRun = false;
+            CloseCurrentWindow();
             break;
         }
         TranslateMessage(&msg);

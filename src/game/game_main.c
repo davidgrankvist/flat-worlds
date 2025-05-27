@@ -4,7 +4,6 @@
 
 int main(int argc, char** argv) {
     Platform* platform = GetPlatform();
-    Window window = platform->window;
     LibraryLoader libLoader = platform->libLoader;
 
     DynamicLibrary gameUpdateLib = {0};
@@ -20,13 +19,13 @@ int main(int argc, char** argv) {
     GameState gameState = {0};
     initGameStateFn(&gameState);
 
-    window.InitWindow("Flat Worlds");
+    InitWindow("Flat Worlds");
 
     ResetFpsTimer();
     SetTargetFps(60);
     uint64_t ticks = GetTicks();
 
-    while (window.IsWindowOpen()) {
+    while (IsWindowOpen()) {
         bool didUpdate = libLoader.LoadDynamicLibrary(gameUpdatePath, &gameUpdateLib);
         if (didUpdate) {
             gameUpdateFn = (GameUpdateFunc)libLoader.LoadLibraryFunction("GameUpdate", &gameUpdateLib);

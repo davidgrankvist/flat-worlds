@@ -158,14 +158,12 @@ LIBGAME_EXPORT void MoveCameraTowardsTarget(Camera3D* camera, float distanceOffs
 
 // -- Window --
 
-typedef struct {
-    void (*InitWindow)(const char* title);
-    bool (*IsWindowOpen)();
-    void (*CloseCurrentWindow)();
-    int (*GetClientWidth)();
-    int (*GetClientHeight)();
-    void (*InitConsole)();
-} Window;
+LIBGAME_EXPORT void InitWindow(const char* title);
+LIBGAME_EXPORT bool IsWindowOpen();
+LIBGAME_EXPORT void CloseCurrentWindow();
+LIBGAME_EXPORT int GetClientWidth();
+LIBGAME_EXPORT int GetClientHeight();
+LIBGAME_EXPORT void InitConsole();
 
 // -- Timing --
 
@@ -208,7 +206,6 @@ typedef struct {
 // -- Platform API combined struct --
 
 typedef struct {
-    Window window;
     LibraryLoader libLoader;
 } Platform;
 

@@ -59,19 +59,19 @@ void InitGameState(GameState* gameState) {
     gameState->startingCamera = startingCamera;
 }
 
-static void RunDevCommands(GameState* gameState, Platform* platform);
+static void RunDevCommands(GameState* gameState);
 static void UpdateCamera(float deltaTime, GameState* gameState);
 static void DrawGraphics(GameState* gameState);
 
-void GameUpdate(float deltaTime, GameState* gameState, Platform* platform) {
-    RunDevCommands(gameState, platform);
+void GameUpdate(float deltaTime, GameState* gameState) {
+    RunDevCommands(gameState);
     UpdateCamera(deltaTime, gameState);
     DrawGraphics(gameState);
 }
 
-static void RunDevCommands(GameState* gameState, Platform* platform) {
+static void RunDevCommands(GameState* gameState) {
     if (IsKeyPressed(KeyEsc)) {
-        platform->window.CloseCurrentWindow();
+        CloseCurrentWindow();
     }
     if (IsKeyDown(KeyLeftShift) && IsKeyPressed(KeyR)) {
         InitGameState(gameState);
