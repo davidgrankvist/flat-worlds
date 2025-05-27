@@ -53,7 +53,7 @@ typedef struct {
  * owns both updates and resets.
  */
 typedef void (*InitGameStateFunc)(GameState* gameState);
-typedef void (*GameUpdateFunc)(float deltaTime, GameState* gameState, Platform* platform);
+typedef void (*GameUpdateFunc)(float deltaTime, GameState* gameState);
 
 #endif
 

@@ -4,7 +4,7 @@
  * This file is responsible for:
  * 1. initializing things for lib/common
  * 2. responding to events (input etc.)
- * 3. setting up public function pointers for libgame.h
+ * 3. setting up internal function pointers to support the public functions in libgame.h
  *
  * The WinMain is defined in libgame_platform_main.h and is not included in the library build.
  */
@@ -25,6 +25,7 @@
 #include "platform_render.h"
 #include "platform_timing.h"
 #include "platform_window.h"
+#include "platform_library_load.h"
 
 #include "libgame.h"
 #include "input.h"
@@ -37,24 +38,15 @@
  */
 void InitMainWin32();
 
-/*
- * Used by the game code to access the platform API
- * after the function pointers have been set up.
- */
-Platform* GetPlatform();
-
 // -- Forward declarations (internal) --
 
-static Platform InitPlatformWin32();
+static void InitPlatformWin32();
 
 static void InitPlatformWindowWin32();
 static void InitInputWin32();
 static void InitRenderGlWin32();
 static void InitTimingWin32();
-
-static void ResolvePath(char* name, FileExtensionType extension, char* out, int outSize);
-static bool LoadLibraryInternal(char* name, DynamicLibrary* lib);
-static void* LoadLibraryFunction(char* name, DynamicLibrary* lib);
+static void InitLibraryLoaderWin32();
 
 // -- State --
 
@@ -63,12 +55,6 @@ int windowNCmdShow;
 MSG msg = {};
 HWND windowHwnd;
 HDC windowHdc;
-
-Platform win32Platform = {};
-
-Platform* GetPlatform() {
-    return &win32Platform;
-}
 
 static void InitConsoleWin32();
 
@@ -79,24 +65,15 @@ void InitMainWin32() {
     windowHInstance = GetModuleHandle(NULL);
     windowNCmdShow = SW_SHOWDEFAULT;
 
-    win32Platform = InitPlatformWin32();
+    InitPlatformWin32();
 }
 
-static Platform InitPlatformWin32() {
-    Platform platform = {};
-
+static void InitPlatformWin32() {
     InitPlatformWindowWin32();
     InitInputWin32();
     InitRenderGlWin32();
     InitTimingWin32();
-
-    LibraryLoader libLoader = {};
-    libLoader.ResolvePath = ResolvePath;
-    libLoader.LoadDynamicLibrary = LoadLibraryInternal;
-    libLoader.LoadLibraryFunction = LoadLibraryFunction;
-    platform.libLoader = libLoader;
-
-    return platform;
+    InitLibraryLoaderWin32();
 }
 
 // -- Window --
@@ -505,6 +482,18 @@ static void InitTimingWin32() {
 
 // -- Dynamic loading --
 
+static void ResolvePathWin32(char* name, FileExtensionType extension, char* out, int outSize);
+static bool LoadDynamicLibraryWin32(char* name, DynamicLibrary* lib);
+static void* LoadLibraryFunctionWin32(char* name, DynamicLibrary* lib);
+
+static void InitLibraryLoaderWin32() {
+    PlatformLibraryLoader libraryLoader = {};
+    libraryLoader.ResolvePath = ResolvePathWin32;
+    libraryLoader.LoadDynamicLibrary = LoadDynamicLibraryWin32;
+    libraryLoader.LoadLibraryFunction = LoadLibraryFunctionWin32;
+    SetPlatformLibraryLoader(libraryLoader);
+}
+
 static const char* GetFileExtension(FileExtensionType extension) {
     switch(extension) {
         case LibraryExtension: return ".dll";
@@ -514,7 +503,7 @@ static const char* GetFileExtension(FileExtensionType extension) {
     return NULL;
 }
 
-static void ResolvePath(char* name, FileExtensionType extension, char* out, int outSize) {
+static void ResolvePathWin32(char* name, FileExtensionType extension, char* out, int outSize) {
     const char* ext = GetFileExtension(extension);
 
     char exePath[MAX_PATH];
@@ -580,7 +569,7 @@ static bool IsFileLocked(char* path) {
  * Reloading is mainly for debug builds and quick iteration,
  * but for now the copy step is always enabled.
  */
-static bool LoadLibraryInternal(char* path, DynamicLibrary* lib) {
+static bool LoadDynamicLibraryWin32(char* path, DynamicLibrary* lib) {
     char tempName[MAX_PATH];
 
     bool isFirstLoad = lib->lastWrite == 0;
@@ -619,7 +608,7 @@ static bool LoadLibraryInternal(char* path, DynamicLibrary* lib) {
     return true;
 }
 
-static void* LoadLibraryFunction(char* name, DynamicLibrary* lib) {
+static void* LoadLibraryFunctionWin32(char* name, DynamicLibrary* lib) {
     if (lib->handle == NULL) {
         return NULL;
     }

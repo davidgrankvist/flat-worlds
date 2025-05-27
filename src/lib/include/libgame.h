@@ -3,8 +3,6 @@
  *
  * These are the primary utilities to use in the game, like window creation,
  * managing inputs and rendering.
- *
- * The Platform struct is a container for function pointers to those utilities.
  */
 
 #ifndef libgame_h
@@ -176,7 +174,7 @@ LIBGAME_EXPORT int GetFps();
 LIBGAME_EXPORT void SleepUntilNextFrame();
 LIBGAME_EXPORT void ResetFpsTimer();
 
-// -- Dynamic loading --
+// -- Dynamic library loading --
 
 // File handle wrapper to manage load/reload. Zero this struct before first usage.
 typedef struct {
@@ -189,26 +187,16 @@ typedef enum {
     LibraryExtension,
 } FileExtensionType;
 
-typedef struct {
-    /*
-     * Takes a path relative to the executable and resolves it to an absolute path.
-     * The file extension should be omitted from the string and set via the FileExtensionType instead.
-     */
-    void (*ResolvePath)(char* fileBaseName, FileExtensionType extension, char* out, int outSize);
-    /*
-     * Load or reload a library if it has changed. Returns true if a loading or reload was done.
-     * Resolve to an absolute path before calling this.
-     */
-    bool (*LoadDynamicLibrary)(char* libraryPath, DynamicLibrary* lib);
-    void* (*LoadLibraryFunction)(char* functionName, DynamicLibrary* lib);
-} LibraryLoader;
-
-// -- Platform API combined struct --
-
-typedef struct {
-    LibraryLoader libLoader;
-} Platform;
-
-LIBGAME_EXPORT Platform* GetPlatform();
+/*
+ * Takes a path relative to the executable and resolves it to an absolute path.
+ * The file extension should be omitted from the string and set via the FileExtensionType instead.
+ */
+LIBGAME_EXPORT void ResolvePath(char* fileBaseName, FileExtensionType extension, char* out, int outSize);
+/*
+ * Load or reload a library if it has changed. Returns true if a loading or reload was done.
+ * Resolve to an absolute path before calling this.
+ */
+LIBGAME_EXPORT bool LoadDynamicLibrary(char* libraryPath, DynamicLibrary* lib);
+LIBGAME_EXPORT void* LoadLibraryFunction(char* functionName, DynamicLibrary* lib);
 
 #endif

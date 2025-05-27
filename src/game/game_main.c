@@ -3,18 +3,15 @@
 #include "game_state.h"
 
 int main(int argc, char** argv) {
-    Platform* platform = GetPlatform();
-    LibraryLoader libLoader = platform->libLoader;
-
     DynamicLibrary gameUpdateLib = {0};
     GameUpdateFunc gameUpdateFn;
     InitGameStateFunc initGameStateFn;
 
     char gameUpdatePath[256];
-    libLoader.ResolvePath("game_update", LibraryExtension, gameUpdatePath, sizeof(gameUpdatePath));
-    libLoader.LoadDynamicLibrary(gameUpdatePath, &gameUpdateLib);
-    initGameStateFn = (InitGameStateFunc)libLoader.LoadLibraryFunction("InitGameState", &gameUpdateLib);
-    gameUpdateFn = (GameUpdateFunc)libLoader.LoadLibraryFunction("GameUpdate", &gameUpdateLib);
+    ResolvePath("game_update", LibraryExtension, gameUpdatePath, sizeof(gameUpdatePath));
+    LoadDynamicLibrary(gameUpdatePath, &gameUpdateLib);
+    initGameStateFn = (InitGameStateFunc)LoadLibraryFunction("InitGameState", &gameUpdateLib);
+    gameUpdateFn = (GameUpdateFunc)LoadLibraryFunction("GameUpdate", &gameUpdateLib);
 
     GameState gameState = {0};
     initGameStateFn(&gameState);
@@ -26,9 +23,9 @@ int main(int argc, char** argv) {
     uint64_t ticks = GetTicks();
 
     while (IsWindowOpen()) {
-        bool didUpdate = libLoader.LoadDynamicLibrary(gameUpdatePath, &gameUpdateLib);
+        bool didUpdate = LoadDynamicLibrary(gameUpdatePath, &gameUpdateLib);
         if (didUpdate) {
-            gameUpdateFn = (GameUpdateFunc)libLoader.LoadLibraryFunction("GameUpdate", &gameUpdateLib);
+            gameUpdateFn = (GameUpdateFunc)LoadLibraryFunction("GameUpdate", &gameUpdateLib);
         }
 
         ProcessInput();
@@ -37,7 +34,7 @@ int main(int argc, char** argv) {
         uint64_t ellapsed = GetTicks() - ticks;
         float deltaTime = TICKS_TO_SECONDS(ellapsed);
 
-        gameUpdateFn(deltaTime, &gameState, platform);
+        gameUpdateFn(deltaTime, &gameState);
 
         ticks = GetTicks();
     }
