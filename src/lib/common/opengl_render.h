@@ -1,21 +1,14 @@
-/*
- * This is the OpenGL rendering backend.
- *
- * The basic idea is to provide utilities like DrawTriangle and then
- * internally keep track of buffering and batching draw calls.
- */
-
 #ifndef opengl_render_h
 #define opengl_render_h
 
-#include "platform_opengl_render.h"
 #include "libgame.h"
 
-// internal utilities for platform code
-void EndDrawGl(); // call before swapping buffers
-void SetResolutionGl(int width, int height); // call at window resize
+// call before swapping buffers
+void EndDrawGl();
+// call at window resize
+void SetResolutionGl(int width, int height);
 
-// render API
+// use these to set up PlatformRender
 void ConfigureRenderGl(RenderSettings settings);
 void ClearScreenGl(Color color);
 void SetTransformGl(Mat4 mat);

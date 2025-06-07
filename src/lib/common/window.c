@@ -1,6 +1,6 @@
 #include <stdbool.h>
 #include "libgame.h"
-#include "platform_window.h"
+#include "platform_setup.h"
 
 static PlatformWindow platformWindow = {};
 static bool shouldRun = true;

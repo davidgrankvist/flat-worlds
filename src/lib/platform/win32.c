@@ -1,54 +1,32 @@
 /*
- * Platform - Win32
+ * Platform library entrypoint - Win32
  *
- * This file is responsible for:
- * 1. initializing things for lib/common
- * 2. responding to events (input etc.)
- * 3. setting up internal function pointers to support the public functions in libgame.h
+ * This file:
+ * - sets up platform_setup.h function pointers
+ * - implements the InitMainWin32 to be called from WinMain
+ * - responds to events such as key presses
  *
- * The WinMain is defined in libgame_platform_main.h and is not included in the library build.
+ * This is for a library build. The actual WinMain is included directly in the game code via a public header.
  */
 
 #ifndef UNICODE
 #define UNICODE
 #endif
 
-#include "platform_include.h"
+#include "platform_setup.h"
 
 #include <timeapi.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "opengl_render.h"
 #include <gl/wglext.h>
 
-#include "platform_render.h"
-#include "platform_timing.h"
-#include "platform_window.h"
-#include "platform_library_load.h"
-
-#include "libgame.h"
-#include "input.h"
 #include "asserts.h"
+#include "opengl_render.h"
+#include "input.h"
 
-// -- Forward declarations (public API) --
-
-/*
- * Used in WinMain to set up platform function pointers.
- */
-void InitMainWin32();
-
-// -- Forward declarations (internal) --
-
+static void InitConsoleWin32();
 static void InitPlatformWin32();
-
-static void InitPlatformWindowWin32();
-static void InitInputWin32();
-static void InitRenderGlWin32();
-static void InitTimingWin32();
-static void InitLibraryLoaderWin32();
-
-// -- State --
 
 HINSTANCE windowHInstance;
 int windowNCmdShow;
@@ -56,8 +34,7 @@ MSG msg = {};
 HWND windowHwnd;
 HDC windowHdc;
 
-static void InitConsoleWin32();
-
+// Public API - Used in WinMain to set up platform function pointers.
 void InitMainWin32() {
     if (getenv("DEBUG_CONSOLE")) {
         InitConsoleWin32();
@@ -67,6 +44,12 @@ void InitMainWin32() {
 
     InitPlatformWin32();
 }
+
+static void InitPlatformWindowWin32();
+static void InitInputWin32();
+static void InitRenderGlWin32();
+static void InitTimingWin32();
+static void InitLibraryLoaderWin32();
 
 static void InitPlatformWin32() {
     InitPlatformWindowWin32();

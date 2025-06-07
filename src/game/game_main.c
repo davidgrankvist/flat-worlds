@@ -1,5 +1,5 @@
+#define LIBGAME_MAIN
 #include "libgame.h"
-#include "libgame_platform_main.h"
 #include "game_state.h"
 
 int main(int argc, char** argv) {

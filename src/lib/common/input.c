@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include "libgame.h"
-#include "platform_input.h"
+#include "platform_setup.h"
 #include "asserts.h"
 
 // helpers to toggle 1-bit key/button states

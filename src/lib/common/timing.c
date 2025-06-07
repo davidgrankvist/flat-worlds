@@ -1,5 +1,5 @@
 #include "libgame.h"
-#include "platform_timing.h"
+#include "platform_setup.h"
 #include "asserts.h"
 
 PlatformTiming platformTiming = {};

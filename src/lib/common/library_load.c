@@ -1,5 +1,5 @@
 #include "libgame.h"
-#include "platform_library_load.h"
+#include "platform_setup.h"
 
 PlatformLibraryLoader libraryLoader = {};
 

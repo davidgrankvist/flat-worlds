@@ -13,7 +13,13 @@
 
 // -- Set up platform specifics --
 
-#include "libgame_platform.h"
+#ifdef _WIN32
+    #define LIBGAME_EXPORT __declspec(dllexport)
+
+    LIBGAME_EXPORT void InitMainWin32();
+#else
+    #error "Unsupported platform."
+#endif
 
 // -- Math --
 // Just the types here. See libgame_math.h for math functions.
@@ -198,5 +204,26 @@ LIBGAME_EXPORT void ResolvePath(char* fileBaseName, FileExtensionType extension,
  */
 LIBGAME_EXPORT bool LoadDynamicLibrary(char* libraryPath, DynamicLibrary* lib);
 LIBGAME_EXPORT void* LoadLibraryFunction(char* functionName, DynamicLibrary* lib);
+
+// define this in the game entrypoint
+#ifdef LIBGAME_MAIN
+    #ifdef _WIN32
+        #include <windows.h>
+
+        /*
+         * Use wWinMain as the actual main, but make it look like
+         * the game code uses the regular main.
+         */
+        int main(int argc, char** argv);
+
+        int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
+                PWSTR pCmdLine, int nCmdShow) {
+            InitMainWin32();
+            return main(__argc, __argv);
+        }
+    #else
+        #error "No main method has been defined for this platform."
+    #endif
+#endif
 
 #endif

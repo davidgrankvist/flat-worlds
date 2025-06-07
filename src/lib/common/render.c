@@ -4,7 +4,7 @@
  * Delegates to the configured platform render functions.
  */
 
-#include "platform_render.h"
+#include "platform_setup.h"
 
 PlatformRender render = {};
 

@@ -22,7 +22,7 @@
  * - pass through the given position and color
  */
 #include <stdlib.h>
-#include "platform_opengl_render.h"
+#include "platform_setup.h"
 #include "opengl_render.h"
 #include "libgame_math.h"
 #include "camera.h"
