@@ -5,8 +5,8 @@ REM Builds the game update. This DLL can be rebuilt while the game is running.
 REM The PDB is assigned a random name each time, because the debugger will lock it.
 
 set SRC_FILES_NO_MAIN=
-for %%f in (src\game\*.c) do (
-    if /I not "%%f" == "src\game\game_main.c" (
+for %%f in (src\*.c) do (
+    if /I not "%%f" == "src\game_main.c" (
         set SRC_FILES_NO_MAIN=!SRC_FILES_NO_MAIN! %%f
     )
 )
@@ -21,10 +21,11 @@ cl %SRC_FILES_NO_MAIN% ^
     /Fo: bin\ ^
     /Zi ^
     /Fd: bin\ ^
-    /I"src\lib\include" ^
-    /I"src\game" ^
+    /I"libgame\src\include" ^
+    /I"src" ^
     /link ^
         /LIBPATH:bin ^
+        /LIBPATH:"libgame\bin" ^
         libgame.lib ^
         /DEBUG ^
         /PDB:bin\game_update_temp_%random%.pdb ^
