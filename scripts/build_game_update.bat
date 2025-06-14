@@ -6,7 +6,7 @@ REM The PDB is assigned a random name each time, because the debugger will lock 
 
 set SRC_FILES_NO_MAIN=
 for %%f in (src\*.c) do (
-    if /I not "%%f" == "src\game_main.c" (
+    if /I not "%%f" == "src\main.c" (
         set SRC_FILES_NO_MAIN=!SRC_FILES_NO_MAIN! %%f
     )
 )
