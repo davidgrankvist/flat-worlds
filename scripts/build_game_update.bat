@@ -26,7 +26,7 @@ cl %SRC_FILES_NO_MAIN% ^
     /link ^
         /LIBPATH:bin ^
         /LIBPATH:"libgame\bin" ^
-        libgame.lib ^
+        libgamedll.lib ^
         /DEBUG ^
         /PDB:bin\game_update_temp_%random%.pdb ^
         /INCREMENTAL:NO ^

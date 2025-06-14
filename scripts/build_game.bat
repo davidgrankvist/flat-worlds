@@ -14,6 +14,6 @@ cl src\game_main.c ^
     /link ^
         /LIBPATH:bin ^
         /LIBPATH:"libgame\bin" ^
-        libgame.lib ^
+        libgamedll.lib ^
         /SUBSYSTEM:WINDOWS ^
     /nologo
