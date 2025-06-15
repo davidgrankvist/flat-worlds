@@ -18,7 +18,6 @@ int main(int argc, char** argv) {
 
     InitWindow("Flat Worlds");
 
-    ResetFpsTimer();
     SetTargetFps(60);
     uint64_t ticks = GetTicks();
 
