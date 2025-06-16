@@ -1,4 +1,4 @@
-#define LIBGAME_MAIN
+#define LIBGAME_WITH_MAIN
 #include "libgame.h"
 #include "game_state.h"
 

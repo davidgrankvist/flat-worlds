@@ -1,5 +1,5 @@
 #include <math.h>
-#include "libgame_math.h"
+#include "libgame.h"
 #include "game_update.h"
 
 static Color black = { 0, 0, 0, 1 };
